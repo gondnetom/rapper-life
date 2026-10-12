@@ -1,0 +1,125 @@
+import { PRODUCERS } from '../game/content'
+import { formatCount, formatWon } from '../game/format'
+import { SMTM_ROUNDS } from '../game/smtm'
+import type { GameState } from '../game/types'
+import type { Dispatch } from '../game/reducer'
+
+export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch }) {
+  if (state.screen === 'smtmTeam') {
+    return (
+      <section>
+        <p className="kicker">TEAM</p>
+        <h1 className="screen-title">팀 선택</h1>
+        <p className="lede">프로듀서 넷 중 한 팀. 고르면 그 뒤로 파급효과.</p>
+        <div className="stack">
+          {PRODUCERS.map((producer) => (
+            <button
+              className="action"
+              key={producer.id}
+              type="button"
+              onClick={() => dispatch({ type: 'smtm-team', id: producer.id })}
+            >
+              <b>
+                {producer.name} · {producer.team}
+              </b>
+              <span>{producer.meme}</span>
+            </button>
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  if (state.screen === 'smtmYoutube' && state.lastYoutube) {
+    const clip = state.lastYoutube
+    const round = SMTM_ROUNDS[clip.roundIndex]
+    const ripple = Math.round(clip.ripple * 100)
+    return (
+      <section>
+        <div className="youtube">
+          <p className="kicker">{clip.passed ? 'PASS' : 'DROP'}</p>
+          <h1 className="yt-title">
+            {state.snakeTag ? `[뱀새끼] ` : ''}
+            {state.rapName} {clip.roundName}
+            {round.kind === 'diss' && clip.rivalName ? ` vs ${clip.rivalName}` : ''}
+          </h1>
+          <p className="producer">
+            <b>{clip.producer}</b>
+            <span>{clip.producerLine}</span>
+          </p>
+          <p className="views">
+            조회수 {formatCount(clip.views)}
+            <span>좋아요 {formatCount(clip.likes)}</span>
+          </p>
+          <p className="note">
+            판정 {Math.round(clip.judgement)}
+            {clip.rivalScore != null && clip.rivalName
+              ? ` · ${clip.rivalName} ${clip.rivalScore}`
+              : round.kind === 'team'
+                ? ' · 팀 합류'
+                : ` · 커트 ${round.bar}`}
+            {state.snakeTag ? ' · 꼬리표 -4' : ''}
+          </p>
+          {clip.comments.map((line) => (
+            <p className="comment" key={line}>
+              {line}
+            </p>
+          ))}
+        </div>
+        <p className={clip.passed ? 'delta' : 'delta down'} style={{ marginTop: 12 }}>
+          {clip.passed
+            ? [
+                `통과 · 파급효과 +${ripple}%`,
+                clip.gig ? `공연 제의 ${formatWon(clip.gig)}` : '',
+                clip.prize ? `상금 ${formatWon(clip.prize)}` : '',
+              ]
+                .filter(Boolean)
+                .join(' · ')
+            : '드랍 · 파급효과는 여기서 멈춤'}
+          {' · '}이번 시즌 {formatWon(clip.seasonEarned)}
+        </p>
+        {state.lastPerformNote && <p className="note">{state.lastPerformNote}</p>}
+        <button className="btn btn-wide" style={{ marginTop: 16 }} type="button" onClick={() => dispatch({ type: 'ack-youtube' })}>
+          {clip.passed && clip.roundIndex < SMTM_ROUNDS.length - 1 ? '다음 라운드' : '시즌 컷'}
+        </button>
+      </section>
+    )
+  }
+
+  return (
+    <section>
+      <p className="kicker">SHOW ME THE MONEY</p>
+      <h1 className="screen-title">쇼미더머니</h1>
+      <p className="lede">
+        {state.smtmTrashTalk
+          ? '예전에 쇼미 쓰레기라고 깔았음. 지금 나가면 말머리에 뱀새끼.'
+          : '파이널 상금 10억. 라운드 넘기면 파급효과. 중간에 떨어지면 시즌 컷. 망하면 랩 오브 차이나.'}
+      </p>
+      <div className="stack">
+        {SMTM_ROUNDS.map((round, index) => (
+          <div className="line-meta" key={round.name}>
+            <span>
+              {index + 1}. {round.name}
+              {round.kind === 'acapella' ? ' · 무반주' : ''}
+              {round.kind === 'team' ? ' · 프로듀서' : ''}
+              {round.kind === 'diss' ? ' · 상대 호명' : ''}
+              {round.prize ? ` · 상금 ${formatWon(round.prize)}` : ''}
+            </span>
+            <b>파급효과 +{Math.round(round.ripple * 100)}%</b>
+          </div>
+        ))}
+        <button className="btn btn-wide" type="button" onClick={() => dispatch({ type: 'smtm-join' })}>
+          출연한다
+        </button>
+        <button className="btn-secondary btn-wide" type="button" onClick={() => dispatch({ type: 'smtm-skip' })}>
+          안 나감
+        </button>
+        {!state.smtmTrashTalk && (
+          <button className="btn-ghost btn-wide" type="button" onClick={() => dispatch({ type: 'smtm-trash' })}>
+            쇼미 쓰레기라고 깐다
+          </button>
+        )}
+      </div>
+    </section>
+  )
+}
