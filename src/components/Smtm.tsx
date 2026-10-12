@@ -10,7 +10,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
       <section>
         <p className="kicker">TEAM</p>
         <h1 className="screen-title">팀 선택</h1>
-        <p className="lede">프로듀서 넷 중 한 팀. 고르면 그 뒤로 파급효과.</p>
+        <p className="lede">프로듀서 네 팀 중 하나를 고른다. 고르면 그 뒤로 파급이 붙는다.</p>
         <div className="stack">
           {PRODUCERS.map((producer) => (
             <button
@@ -39,7 +39,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
         <div className="youtube">
           <p className="kicker">{clip.passed ? 'PASS' : 'DROP'}</p>
           <h1 className="yt-title">
-            {state.snakeTag ? `[뱀새끼] ` : ''}
+            {state.snakeTag ? `[과거 발언] ` : ''}
             {state.rapName} {clip.roundName}
             {round.kind === 'diss' && clip.rivalName ? ` vs ${clip.rivalName}` : ''}
           </h1>
@@ -57,7 +57,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
               ? ` · ${clip.rivalName} ${clip.rivalScore}`
               : round.kind === 'team'
                 ? ' · 팀 합류'
-                : ` · 커트 ${round.bar}`}
+                : ` · 기준 ${round.bar}`}
             {state.snakeTag ? ' · 꼬리표 -4' : ''}
           </p>
           {clip.comments.map((line) => (
@@ -69,18 +69,18 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
         <p className={clip.passed ? 'delta' : 'delta down'} style={{ marginTop: 12 }}>
           {clip.passed
             ? [
-                `통과 · 파급효과 +${ripple}%`,
+                `통과했다 · 파급 +${ripple}%`,
                 clip.gig ? `공연 제의 ${formatWon(clip.gig)}` : '',
                 clip.prize ? `상금 ${formatWon(clip.prize)}` : '',
               ]
                 .filter(Boolean)
                 .join(' · ')
-            : '드랍 · 파급효과는 여기서 멈춤'}
+            : '탈락 · 파급은 여기서 멈춘다'}
           {' · '}이번 시즌 {formatWon(clip.seasonEarned)}
         </p>
         {state.lastPerformNote && <p className="note">{state.lastPerformNote}</p>}
         <button className="btn btn-wide" style={{ marginTop: 16 }} type="button" onClick={() => dispatch({ type: 'ack-youtube' })}>
-          {clip.passed && clip.roundIndex < SMTM_ROUNDS.length - 1 ? '다음 라운드' : '시즌 컷'}
+          {clip.passed && clip.roundIndex < SMTM_ROUNDS.length - 1 ? '다음 라운드' : '시즌 마무리'}
         </button>
       </section>
     )
@@ -92,8 +92,8 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
       <h1 className="screen-title">쇼미더머니</h1>
       <p className="lede">
         {state.smtmTrashTalk
-          ? '예전에 쇼미 쓰레기라고 깔았음. 지금 나가면 말머리에 뱀새끼.'
-          : '파이널 상금 10억. 라운드 넘기면 파급효과. 중간에 떨어지면 시즌 컷. 망하면 랩 오브 차이나.'}
+          ? '예전에 쇼미가 쓰레기라고 깎아 놨다. 지금 나가면 그 말이 닉 앞에 붙는다.'
+          : '파이널 상금은 10억이다. 라운드를 넘기면 파급이 붙고, 중간에 떨어지면 시즌이 끝난다. 망하면 여기서 시즌이 닫힌다.'}
       </p>
       <div className="stack">
         {SMTM_ROUNDS.map((round, index) => (
@@ -112,11 +112,11 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
           출연한다
         </button>
         <button className="btn-secondary btn-wide" type="button" onClick={() => dispatch({ type: 'smtm-skip' })}>
-          안 나감
+          나가지 않는다
         </button>
         {!state.smtmTrashTalk && (
           <button className="btn-ghost btn-wide" type="button" onClick={() => dispatch({ type: 'smtm-trash' })}>
-            쇼미 쓰레기라고 깐다
+            쇼미가 쓰레기라고 말한다
           </button>
         )}
       </div>

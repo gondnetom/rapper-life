@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { loadCover } from '../audio/covers'
+import { paintAlbumCard } from '../lib/albumShare'
 import { describeCareer, smtmCareerLabel } from '../game/archetype'
-import { GENRE_LABEL, ORIGINS, PHASES, BRIEF_ACTIONS, groupTimeline } from '../game/content'
-import { formatRep, formatWon, statLabel, topStat } from '../game/format'
+import { BRIEF_ACTIONS, GENRE_LABEL, ORIGINS, PHASES, PRODUCERS, groupTimeline } from '../game/content'
+import { formatRep, formatWon, statLabel, topStat, wa } from '../game/format'
 import { signatureLine } from '../game/lyricsScore'
-import type { GameState, Genre } from '../game/types'
+import type { GameState, Genre, YoutubeResult } from '../game/types'
 
 const GENRE_COLOR: Record<string, string> = {
   boomBap: '#c4a574',
@@ -51,20 +53,27 @@ function phaseStyles(state: GameState): { phase: number; name: string; genre: Ge
   return rows
 }
 
+function showMeLine(state: GameState): string {
+  if (state.smtmBestClears < 0 && state.smtmTrashTalk) return '쇼미에는 나가지 않고 욕만 했다.'
+  if (state.smtmBestClears < 0) return '쇼미에는 나가지 않았다.'
+  if (state.smtmBestClears >= 7) return '쇼미는 파이널에서 우승했다.'
+  return `쇼미는 ${smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk)}으로 끝났다.`
+}
+
 function biography(state: GameState): string[] {
   const origin = ORIGINS.find((item) => item.id === state.originId)
   const lines: string[] = []
   if (state.originStory.trim()) lines.push(state.originStory.trim())
   else if (origin && state.genre) {
-    lines.push(`${origin.place} 출신. ${origin.entry}. 본캐는 ${GENRE_LABEL[origin.genre]}.`)
+    lines.push(`${origin.place}에서 시작했다. 주력 장르는 ${GENRE_LABEL[origin.genre]}이다.`)
   }
-  if (state.ownLabel) lines.push(`${state.labelName ?? '자기 레이블'} 간판을 직접 차림.`)
-  else if (state.signedLabel) lines.push(`${state.labelName ?? '레이블'} 소속.`)
-  else lines.push('소속 없이 인디.')
+  if (state.ownLabel) lines.push(`${state.labelName ?? '자기 레이블'} 간판은 직접 달았다.`)
+  else if (state.signedLabel) lines.push(`${state.labelName ?? '레이블'} 소속이다.`)
+  else lines.push('소속사 없이 인디로 활동했다.')
   lines.push(
-    `쇼미는 ${smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk)}. 통장 ${formatWon(state.money)}, 이름값 ${formatRep(state.reputation)}. 대표 스탯은 ${statLabel(topStat(state.stats))}.`,
+    `${showMeLine(state)} 통장에는 ${formatWon(state.money)}이 있고, 이름값은 ${formatRep(state.reputation)}이다. 제일 잘한 건 ${statLabel(topStat(state.stats))}이다.`,
   )
-  if (state.snakeTag) lines.push('과거 발언이 말머리에 남음.')
+  if (state.snakeTag) lines.push('예전에 한 말이 닉 앞에 남았다.')
   return lines
 }
 
@@ -73,21 +82,15 @@ function paint(state: GameState) {
   const origin = ORIGINS.find((item) => item.id === state.originId)
   const history = careerGroups(state)
   const styles = phaseStyles(state)
-  const fullRows = history.reduce((sum, group) => sum + group.items.filter((item) => !BRIEF_ACTIONS.has(item.title)).length, 0)
-  const briefRows = history.filter((group) => group.items.some((item) => BRIEF_ACTIONS.has(item.title))).length
   const footerReserve = 132
-  const height = Math.min(
-    4200,
-    Math.max(1680, 820 + footerReserve + styles.length * 48 + history.length * 52 + briefRows * 56 + fullRows * 78 + state.tracks.length * 210),
-  )
-  const canvas = document.createElement('canvas')
-  canvas.width = 1080
-  canvas.height = height
-  const ctx = canvas.getContext('2d')
+  const scratch = document.createElement('canvas')
+  scratch.width = 1080
+  scratch.height = 7200
+  const ctx = scratch.getContext('2d')
   if (!ctx) return null
   const color = state.genre ? GENRE_COLOR[state.genre] : '#1db954'
   ctx.fillStyle = '#101010'
-  ctx.fillRect(0, 0, 1080, height)
+  ctx.fillRect(0, 0, 1080, scratch.height)
   ctx.fillStyle = color
   ctx.fillRect(0, 0, 1080, 18)
   ctx.font = '700 28px Pretendard, Malgun Gothic, sans-serif'
@@ -106,10 +109,10 @@ function paint(state: GameState) {
     state.genre ? GENRE_LABEL[state.genre] : '',
     origin?.place ?? '',
     state.ownLabel ? '사장' : state.signedLabel ? (state.labelName ?? '레이블') : '인디',
-    formatWon(state.money),
+    `잔고 ${formatWon(state.money)}`,
     `이름값 ${formatRep(state.reputation)}`,
     smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk),
-    state.snakeTag ? '뱀새끼' : '',
+    state.snakeTag ? '과거 발언' : '',
   ].filter(Boolean)
   ctx.fillStyle = '#ffffff'
   ctx.font = '700 28px Pretendard, Malgun Gothic, sans-serif'
@@ -126,7 +129,7 @@ function paint(state: GameState) {
 
   ctx.fillStyle = color
   ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
-  ctx.fillText('본캐', 72, y + 28)
+  ctx.fillText('주력', 72, y + 28)
   y += 52
   for (const row of styles) {
     ctx.fillStyle = '#1b1b1b'
@@ -144,7 +147,7 @@ function paint(state: GameState) {
 
   ctx.fillStyle = color
   ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
-  ctx.fillText('킬링벌스', 72, y + 28)
+  ctx.fillText('대표 가사', 72, y + 28)
   y += 52
   state.tracks.forEach((track, index) => {
     const quote = signatureLine(track.lyrics)
@@ -193,10 +196,151 @@ function paint(state: GameState) {
     }
   }
 
-  ctx.fillStyle = '#666'
-  ctx.font = '400 24px Pretendard, Malgun Gothic, sans-serif'
-  ctx.fillText('신입부터 황혼기까지', 72, height - 40)
+  const height = Math.max(1680, y + footerReserve)
+  const canvas = document.createElement('canvas')
+  canvas.width = 1080
+  canvas.height = height
+  const out = canvas.getContext('2d')
+  if (!out) return null
+  out.fillStyle = '#101010'
+  out.fillRect(0, 0, 1080, height)
+  const drawn = Math.min(y, scratch.height)
+  out.drawImage(scratch, 0, 0, 1080, drawn, 0, 0, 1080, drawn)
+  out.fillStyle = '#666'
+  out.font = '400 24px Pretendard, Malgun Gothic, sans-serif'
+  out.fillText('신입부터 황혼기까지', 72, height - 40)
   return canvas
+}
+
+function clipText(ctx: CanvasRenderingContext2D, text: string, max: number) {
+  if (!text) return ''
+  if (ctx.measureText(text).width <= max) return text
+  let next = text
+  while (next.length > 1 && ctx.measureText(`${next}…`).width > max) next = next.slice(0, -1)
+  return `${next}…`
+}
+
+function blobOf(canvas: HTMLCanvasElement) {
+  return new Promise<Blob | null>((resolve) => canvas.toBlob((file) => resolve(file), 'image/png'))
+}
+
+function safePart(value: string) {
+  const raw = value.replace(/[\\/:*?"<>|]/g, '').trim()
+  return raw.slice(0, 40) || 'image'
+}
+
+function smtmRounds(state: GameState): { phase: number; result: YoutubeResult }[] {
+  const log = (state.smtmLog ?? []).filter((item) => item?.result && typeof item.result.roundName === 'string')
+  if (log.length) return log
+  if (state.lastYoutube) return [{ phase: state.phase, result: state.lastYoutube }]
+  return []
+}
+
+function opponentLine(clip: YoutubeResult) {
+  if (!clip.rivalName) return `판정은 ${Math.round(clip.judgement)}점이었다.`
+  if (clip.rivalScore == null) return `상대는 ${wa(clip.rivalName)} 맞붙었다.`
+  return `상대는 ${wa(clip.rivalName)} 맞붙어서 ${clip.rivalScore}점 대 ${Math.round(clip.judgement)}점이었다.`
+}
+
+function producerLine(clip: YoutubeResult) {
+  const team = PRODUCERS.find((item) => item.name === clip.producer)?.team
+  if (team && !clip.producerLine.includes(team)) return `프로듀서는 ${clip.producer}, 소속은 ${team}.`
+  return `프로듀서는 ${clip.producer}.`
+}
+
+function payoffLine(clip: YoutubeResult) {
+  const ripple = clip.ripple > 0 ? `파급효과는 +${Math.round(clip.ripple * 100)}%였다` : '파급효과는 없었다'
+  if (clip.prize > 0) return `${ripple}. 상금은 ${formatWon(clip.prize)}이었다.`
+  return `${ripple}.`
+}
+
+function paintSmtm(state: GameState) {
+  const rounds = smtmRounds(state)
+  const color = state.genre ? GENRE_COLOR[state.genre] : '#1db954'
+  const cardH = 248
+  const height = rounds.length === 0 ? 620 : 250 + rounds.length * (cardH + 18) + 40
+  const canvas = document.createElement('canvas')
+  canvas.width = 1080
+  canvas.height = height
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.fillStyle = '#101010'
+  ctx.fillRect(0, 0, 1080, height)
+  ctx.fillStyle = color
+  ctx.fillRect(0, 0, 1080, 18)
+  ctx.font = '700 28px Pretendard, Malgun Gothic, sans-serif'
+  ctx.fillStyle = color
+  ctx.fillText('쇼미 세부 결과', 72, 110)
+  ctx.fillStyle = '#d7d7d7'
+  ctx.font = '400 32px Pretendard, Malgun Gothic, sans-serif'
+  const summary =
+    rounds.length === 0
+      ? showMeLine(state)
+      : state.smtmBestClears < 0
+        ? '쇼미에 나간 라운드만 남아 있다.'
+        : showMeLine(state)
+  let y = wrap(ctx, summary, 72, 176, 936, 46)
+  if (rounds.length === 0 && state.smtmBestClears >= 0) {
+    ctx.fillStyle = '#9a9a9a'
+    ctx.font = '400 28px Pretendard, Malgun Gothic, sans-serif'
+    wrap(ctx, '라운드별 기록은 남아 있지 않다.', 72, y + 8, 936, 42)
+  }
+  y = 250
+  for (const row of rounds) {
+    const clip = row.result
+    const phaseName = PHASES[row.phase]?.name ?? ''
+    ctx.fillStyle = '#1b1b1b'
+    ctx.fillRect(72, y, 936, cardH)
+    ctx.fillStyle = color
+    ctx.fillRect(72, y, 12, cardH)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '700 32px Pretendard, Malgun Gothic, sans-serif'
+    ctx.fillText(clipText(ctx, [phaseName, clip.roundName].filter(Boolean).join(' '), 760), 104, y + 52)
+    const verdict = clip.passed ? '통과' : '탈락'
+    ctx.fillStyle = clip.passed ? '#1db954' : '#ff4d4d'
+    ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
+    ctx.fillText(verdict, 984 - ctx.measureText(verdict).width, y + 50)
+    ctx.fillStyle = '#d7d7d7'
+    ctx.font = '400 26px Pretendard, Malgun Gothic, sans-serif'
+    ctx.fillText(clipText(ctx, opponentLine(clip), 860), 104, y + 102)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '600 26px Pretendard, Malgun Gothic, sans-serif'
+    ctx.fillText(clipText(ctx, producerLine(clip), 860), 104, y + 146)
+    ctx.fillStyle = '#9a9a9a'
+    ctx.font = '400 24px Pretendard, Malgun Gothic, sans-serif'
+    ctx.fillText(clip.producerLine ? clipText(ctx, clip.producerLine, 860) : '', 104, y + 186)
+    ctx.fillStyle = '#ffffff'
+    ctx.font = '500 24px Pretendard, Malgun Gothic, sans-serif'
+    ctx.fillText(clipText(ctx, payoffLine(clip), 860), 104, y + 224)
+    y += cardH + 18
+  }
+  return canvas
+}
+
+function downloadFiles(files: File[]) {
+  const urls: string[] = []
+  for (const file of files) {
+    const url = URL.createObjectURL(file)
+    urls.push(url)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.name
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  }
+  window.setTimeout(() => {
+    for (const url of urls) URL.revokeObjectURL(url)
+  }, 4000)
+}
+
+function saveStatus(trackCount: number, shared: boolean) {
+  if (shared) {
+    if (trackCount === 0) return '결과표와 쇼미 결과를 공유 창에 올렸다.'
+    return `결과표, 곡 ${trackCount}장, 쇼미 결과를 공유 창에 올렸다.`
+  }
+  if (trackCount === 0) return '결과표 1장과 쇼미 결과 1장을 저장했다.'
+  return `결과표 1장, 곡 ${trackCount}장, 쇼미 결과 1장을 저장했다.`
 }
 
 export function ShareCard({ state }: { state: GameState }) {
@@ -209,31 +353,63 @@ export function ShareCard({ state }: { state: GameState }) {
 
   async function save() {
     await Promise.race([document.fonts.ready, new Promise((resolve) => setTimeout(resolve, 1200))])
-    const canvas = paint(state)
-    if (!canvas) return
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob((file) => resolve(file), 'image/png'))
-    if (!blob) return
-    const file = new File([blob], `${state.rapName}-career.png`, { type: 'image/png' })
-    const shareData = { files: [file], title: `${state.rapName}의 커리어` }
+    const files: File[] = []
+    const poster = paint(state)
+    const posterBlob = poster ? await blobOf(poster) : null
+    if (posterBlob) files.push(new File([posterBlob], `${safePart(state.rapName)}-결과표.png`, { type: 'image/png' }))
+
+    const used = new Set<string>()
+    let trackCount = 0
+    for (const track of state.tracks) {
+      let cover: Blob | null = null
+      if (track.coverId) {
+        try {
+          cover = await loadCover(track.coverId)
+        } catch {
+          cover = null
+        }
+      }
+      const image = await paintAlbumCard({
+        rapName: state.rapName,
+        title: track.title,
+        genre: track.genre,
+        score: track.score,
+        rhythmMark: track.rhythmMark,
+        lyrics: track.lyrics,
+        cover,
+      })
+      if (!image) continue
+      let base = `${safePart(state.rapName)}-곡-${safePart(track.title)}`
+      if (used.has(base)) {
+        let n = 2
+        while (used.has(`${base}-${n}`)) n += 1
+        base = `${base}-${n}`
+      }
+      used.add(base)
+      files.push(new File([image], `${base}.png`, { type: 'image/png' }))
+      trackCount += 1
+    }
+
+    const smtm = paintSmtm(state)
+    const smtmBlob = smtm ? await blobOf(smtm) : null
+    if (smtmBlob) files.push(new File([smtmBlob], `${safePart(state.rapName)}-쇼미.png`, { type: 'image/png' }))
+    if (!files.length) return
+
+    const shareData = { files, title: `${state.rapName}의 커리어` }
     if (navigator.canShare?.(shareData)) {
       try {
         await Promise.race([
           navigator.share(shareData),
           new Promise((_, reject) => setTimeout(() => reject(new Error('share-timeout')), 1500)),
         ])
-        setStatus('공유 시트 열림.')
+        setStatus(saveStatus(trackCount, true))
         return
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return
       }
     }
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = file.name
-    link.click()
-    URL.revokeObjectURL(url)
-    setStatus('이미지 저장함.')
+    downloadFiles(files)
+    setStatus(saveStatus(trackCount, false))
   }
 
   const color = state.genre ? GENRE_COLOR[state.genre] : '#1db954'
@@ -241,10 +417,10 @@ export function ShareCard({ state }: { state: GameState }) {
     state.genre ? GENRE_LABEL[state.genre] : '',
     origin?.place ?? '',
     state.ownLabel ? '사장' : state.signedLabel ? (state.labelName ?? '레이블') : '인디',
-    formatWon(state.money),
+    `잔고 ${formatWon(state.money)}`,
     `이름값 ${formatRep(state.reputation)}`,
     smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk),
-    state.snakeTag ? '뱀새끼' : '',
+    state.snakeTag ? '과거 발언' : '',
   ].filter(Boolean)
 
   return (
@@ -267,14 +443,14 @@ export function ShareCard({ state }: { state: GameState }) {
               {line}
             </p>
           ))}
-          <h3 style={{ color }}>본캐</h3>
+          <h3 style={{ color }}>주력</h3>
           {styles.map((row) => (
             <p className="style-line" key={row.phase}>
               <b>{row.name}</b>
               <span style={{ color }}>{GENRE_LABEL[row.genre]}</span>
             </p>
           ))}
-          <h3 style={{ color }}>킬링벌스</h3>
+          <h3 style={{ color }}>대표 가사</h3>
           {state.tracks.map((track, index) => (
             <div className="line-row" key={track.id} style={{ borderLeftColor: color }}>
               <strong>
@@ -308,6 +484,7 @@ export function ShareCard({ state }: { state: GameState }) {
       <button className="btn btn-wide" style={{ marginTop: 12 }} type="button" onClick={() => void save()}>
         이미지 저장
       </button>
+      <p className="note">결과표, 곡마다 한 장, 쇼미 결과를 각각 이미지로 받는다.</p>
       {status && <p className="note">{status}</p>}
     </section>
   )

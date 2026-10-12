@@ -37,13 +37,13 @@ export function formatCount(n: number): string {
 }
 
 export function formatRep(rep: number): string {
-  return `${Math.round(rep)}/100 ${repLabel(rep)}`
+  return `${Math.round(rep)}/100`
 }
 
 export function repLabel(rep: number): string {
   if (rep >= 72) return '국힙'
-  if (rep >= 48) return '네임드'
-  if (rep >= 24) return '입갤'
+  if (rep >= 48) return '유명'
+  if (rep >= 24) return '신인'
   if (rep >= 8) return '언더'
   return '지망'
 }

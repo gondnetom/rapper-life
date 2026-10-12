@@ -81,8 +81,8 @@ export function Stage({
       <h1 className="screen-title">{state.draftTitle}</h1>
       <p className="lede">
         {acapella
-          ? '무반주. 시작 누르면 뱉고, 종료 누르면 컷.'
-          : '시작 누르면 비트 깔림. 종료 누르면 컷.'}
+          ? '무반주다. 시작을 누르면 뱉고, 종료를 누르면 끝난다.'
+          : '시작을 누르면 비트가 깔리고, 종료를 누르면 끝난다.'}
       </p>
       <div className="timer">{clock}</div>
       <div className="level" aria-hidden="true">

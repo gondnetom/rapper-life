@@ -1,5 +1,4 @@
 import { loadCover } from '../audio/covers'
-import { mixRelease } from '../audio/mix'
 import { GENRE_LABEL } from '../game/content'
 import { signatureLine } from '../game/lyricsScore'
 import type { Genre, Track } from '../game/types'
@@ -127,33 +126,18 @@ export async function shareAlbum(track: Track, rapName: string): Promise<string>
     lyrics: track.lyrics,
     cover,
   })
-  if (!image) return '이미지 제작 실패.'
-  let audio: Blob | null = null
-  let audioFailed = false
-  if (track.audioId) {
-    try {
-      audio = await mixRelease(track.genre, track.audioId, track.beatId)
-      if (!audio) audioFailed = true
-    } catch {
-      audio = null
-      audioFailed = true
-    }
-  }
+  if (!image) return '이미지 제작에 실패했다.'
   const base = fileBase(rapName, track.title)
   const imageFile = new File([image], `${base}.png`, { type: 'image/png' })
-  const files = audio ? [imageFile, new File([audio], `${base}.wav`, { type: 'audio/wav' })] : [imageFile]
-  const payload = { files, title: `${rapName} - ${track.title}`, text: signatureLine(track.lyrics) }
+  const payload = { files: [imageFile], title: `${rapName} - ${track.title}`, text: signatureLine(track.lyrics) }
   if (navigator.canShare?.(payload)) {
     try {
       await navigator.share(payload)
-      return '공유 시트 열림.'
+      return '공유 창이 열렸다.'
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return ''
     }
   }
   download(image, imageFile.name)
-  if (audio) download(audio, `${base}.wav`)
-  if (audio) return '커버랑 음원 저장함.'
-  if (audioFailed) return '커버만 저장함. 음원 제작 실패.'
-  return '커버만 저장함. 녹음이 없어 음원은 빠짐.'
+  return '커버를 저장했다.'
 }

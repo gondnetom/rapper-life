@@ -9,14 +9,14 @@ export function NameScreen({ dispatch }: { dispatch: Dispatch }) {
     <section>
       <p className="kicker">HIPHOP</p>
       <h1 className="screen-title">한국 래퍼의 삶</h1>
-      <p className="lede">닉을 정하면 지망생으로 입갤한다. 동네가 본캐 장르를 잠근다.</p>
+      <p className="lede">이름을 정하면 지망생으로 시작한다. 동네가 주력 장르를 정한다.</p>
       <form
         className="stack"
         onSubmit={(event) => {
           event.preventDefault()
           const next = name.trim()
           if (!isRapName(next)) {
-            setError('닉은 한글, 영문, 숫자 2자에서 12자.')
+            setError('이름은 한글, 영문, 숫자로 2자에서 12자까지다.')
             return
           }
           dispatch({ type: 'set-name', name: next })
@@ -34,7 +34,7 @@ export function NameScreen({ dispatch }: { dispatch: Dispatch }) {
         </label>
         {error && <p className="error">{error}</p>}
         <button className="btn btn-wide" type="submit">
-          입갤
+          시작
         </button>
       </form>
     </section>

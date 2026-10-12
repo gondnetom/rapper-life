@@ -38,7 +38,7 @@ const STATS: StatKey[] = ['lyric', 'compose', 'flow', 'club', 'pr']
 
 export function CareerTimeline({ items }: { items: TimelineItem[] }) {
   const groups = groupTimeline(items)
-  if (!groups.length) return <p className="empty">아직 기록 없음.</p>
+  if (!groups.length) return <p className="empty">아직 기록이 없다.</p>
   return (
     <div className="timeline">
       {groups.map((group) => (
@@ -68,7 +68,7 @@ export function AlbumList({ state }: { state: GameState }) {
 
   useEffect(() => () => stopTake(), [])
 
-  if (!state.tracks.length) return <p className="empty">아직 발매곡 없음.</p>
+  if (!state.tracks.length) return <p className="empty">아직 낸 곡이 없다.</p>
   return (
     <div>
       {state.tracks.map((track) => {
@@ -89,7 +89,7 @@ export function AlbumList({ state }: { state: GameState }) {
                   const mode = await playTake(track.genre, track.audioId, track.beatId)
                   setPlaying(track.id)
                   setOpen(track.id)
-                  setNote(mode === 'full' ? '녹음본을 비트 위에 틈.' : '녹음 없음. 비트만 틈.')
+                  setNote(mode === 'full' ? '녹음본을 비트 위에 깔았다.' : '녹음이 없어서 비트만 깔았다.')
                 })()
               }}
             >
@@ -99,7 +99,7 @@ export function AlbumList({ state }: { state: GameState }) {
               <b>{track.title}</b>
               <span>
                 {PHASES[track.phase]?.name} · {GENRE_LABEL[track.genre]} · 리드머 {track.rhythmMark.toFixed(1)}/5
-                {track.shift === 'boom' ? ' · 노선 개추' : track.shift === 'bust' ? ' · 노선 비추' : ''}
+                {track.shift === 'boom' ? ' · 노선 호평' : track.shift === 'bust' ? ' · 노선 혹평' : ''}
               </span>
             </button>
             <div className="track-side">
@@ -111,7 +111,7 @@ export function AlbumList({ state }: { state: GameState }) {
                 onClick={() => {
                   setOpen(track.id)
                   setBusy(track.id)
-                  setShareNote({ id: track.id, text: '커버랑 음원 뽑는 중' })
+                  setShareNote({ id: track.id, text: '커버를 뽑는 중이다.' })
                   void shareAlbum(track, state.rapName).then((message) => {
                     setShareNote(message ? { id: track.id, text: message } : null)
                     setBusy(null)
@@ -141,7 +141,7 @@ export function AlbumList({ state }: { state: GameState }) {
 export function LogView({ state, dispatch }: { state: GameState; dispatch: Dispatch }) {
   return (
     <section>
-      <h1 className="screen-title">갤 기록</h1>
+      <h1 className="screen-title">기록</h1>
       <div className="stats">
         {STATS.map((key) => (
           <div className="stat" key={key}>
@@ -154,7 +154,7 @@ export function LogView({ state, dispatch }: { state: GameState; dispatch: Dispa
         ))}
       </div>
       <p className="lede">
-        {formatWon(state.money)} · 이름값 {formatRep(state.reputation)}
+        잔고 {formatWon(state.money)} · 이름값 {formatRep(state.reputation)}
         {state.buzz > 1 ? ` · 파급효과 ${Math.round(state.buzz * 100)}%` : ''}
       </p>
       <CareerTimeline items={state.timeline} />
@@ -163,7 +163,7 @@ export function LogView({ state, dispatch }: { state: GameState; dispatch: Dispa
         style={{ marginTop: 20 }}
         type="button"
         onClick={() => {
-          if (window.confirm('이 커리어 지우고 새로 입갤할까요?')) dispatch({ type: 'restart' })
+          if (window.confirm('이 커리어를 지우고 새로 시작할까요?')) dispatch({ type: 'restart' })
         }}
       >
         새 커리어

@@ -38,7 +38,7 @@ export function smtmSeasonLabel(clears: number): string {
 }
 
 export function smtmCareerLabel(bestClears: number, trash: boolean): string {
-  if (bestClears < 0 && trash) return '쇼미 까기'
+  if (bestClears < 0 && trash) return '쇼미 비판'
   if (bestClears < 0) return '불참'
   return smtmSeasonLabel(bestClears)
 }

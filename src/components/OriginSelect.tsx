@@ -14,7 +14,7 @@ export function OriginSelect({ state, dispatch }: { state: GameState; dispatch: 
           <div className="genre-pill">{GENRE_LABEL[origin.genre]}</div>
         </div>
         <button className="btn btn-wide" style={{ marginTop: 16 }} type="button" onClick={() => dispatch({ type: 'ack-story' })}>
-          이 동네로 입갤
+          이 동네에서 시작
         </button>
       </section>
     )
@@ -23,7 +23,7 @@ export function OriginSelect({ state, dispatch }: { state: GameState; dispatch: 
   return (
     <section>
       <h1 className="screen-title">{state.rapName}</h1>
-      <p className="lede">어느 동네에서 입갤했는가. 그게 본캐 장르다.</p>
+      <p className="lede">어느 동네에서 시작했는가. 그게 주력 장르가 된다.</p>
       <div className="stack">
         {ORIGINS.map((origin) => (
           <button className="choice" key={origin.id} type="button" onClick={() => dispatch({ type: 'pick-origin', id: origin.id })}>

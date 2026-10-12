@@ -84,6 +84,11 @@ export interface YoutubeResult {
   seasonEarned: number
 }
 
+export interface SmtmRoundRecord {
+  phase: number
+  result: YoutubeResult
+}
+
 export interface PendingShift {
   from: Genre
   to: Genre
@@ -155,6 +160,7 @@ export interface GameState {
   lastRepDelta: number
   lastPerformNote: string
   lastYoutube: YoutubeResult | null
+  smtmLog: SmtmRoundRecord[]
   modal: ModalEvent | null
   notice: string | null
   noticeTick: number

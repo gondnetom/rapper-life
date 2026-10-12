@@ -1,5 +1,5 @@
 import { RIVALS } from './content'
-import type { GameState, Stats } from './types'
+import type { GameState, SmtmRoundRecord, Stats } from './types'
 
 const KEY = 'rapper-life-v2'
 
@@ -46,6 +46,7 @@ export function freshState(): GameState {
     lastRepDelta: 0,
     lastPerformNote: '',
     lastYoutube: null,
+    smtmLog: [],
     modal: null,
     notice: null,
     noticeTick: 0,
@@ -53,6 +54,19 @@ export function freshState(): GameState {
     beatId: null,
     usedBeats: [],
   }
+}
+
+function readSmtmLog(value: unknown): SmtmRoundRecord[] {
+  if (!Array.isArray(value)) return []
+  const rows: SmtmRoundRecord[] = []
+  for (const item of value) {
+    if (!item || typeof item !== 'object') continue
+    const row = item as SmtmRoundRecord
+    const result = row.result
+    if (!result || typeof result.roundName !== 'string' || typeof result.passed !== 'boolean') continue
+    rows.push({ phase: typeof row.phase === 'number' ? row.phase : 0, result })
+  }
+  return rows
 }
 
 export function loadGame(): GameState | null {
@@ -75,6 +89,7 @@ export function loadGame(): GameState | null {
       noticeTick: data.noticeTick ?? 0,
       smtmTeam: data.smtmTeam ?? null,
       smtmOpponent: data.smtmOpponent ?? null,
+      smtmLog: readSmtmLog(data.smtmLog),
       beatId: data.beatId ?? null,
       usedBeats: Array.isArray(data.usedBeats) ? data.usedBeats : [],
       draftCoverId: typeof data.draftCoverId === 'string' ? data.draftCoverId : null,

@@ -60,13 +60,13 @@ export function Shell({
             </div>
           </div>
           <p className="top-meta">
-            {formatWon(state.money)} · 이름값 {formatRep(state.reputation)}
+            잔고 {formatWon(state.money)} · 이름값 {formatRep(state.reputation)}
             {state.genre ? ` · ${GENRE_LABEL[state.genre]}` : ''}
           </p>
           <div className="badges">
             {state.signedLabel && <span className="badge">{state.labelName ?? '레이블'}</span>}
-            {state.snakeTag && <span className="badge warn">뱀새끼</span>}
-            {state.pendingShift && <span className="badge">역변 대기</span>}
+            {state.snakeTag && <span className="badge warn">과거 발언</span>}
+            {state.pendingShift && <span className="badge">노선 변경 대기</span>}
           </div>
         </header>
       )}

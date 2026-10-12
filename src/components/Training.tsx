@@ -65,11 +65,11 @@ export function EventSheet({ state, dispatch }: { state: GameState; dispatch: Di
             <>
               {GENRES.filter((genre) => genre !== state.genre).map((genre) => (
                 <button key={genre} className="btn btn-wide" type="button" onClick={() => dispatch({ type: 'resolve-event', choice: genre })}>
-                  {euro(GENRE_LABEL[genre])} 노선 변경
+                  {euro(GENRE_LABEL[genre])} 바꾼다
                 </button>
               ))}
               <button className="btn-secondary btn-wide" type="button" onClick={() => dispatch({ type: 'resolve-event', choice: 'keep' })}>
-                본캐 유지
+                하던 장르 유지
               </button>
             </>
           )}
@@ -99,13 +99,13 @@ export function EventSheet({ state, dispatch }: { state: GameState; dispatch: Di
                 맞장 받는다
               </button>
               <button className="btn-secondary btn-wide" type="button" onClick={() => dispatch({ type: 'resolve-event', choice: 'pass' })}>
-                쫄아서 피한다
+                겁나서 피한다
               </button>
             </>
           )}
           {modal.kind === 'snake' && (
             <button className="btn btn-wide" type="button" onClick={() => dispatch({ type: 'resolve-event', choice: 'ok' })}>
-              캡처 봤음
+              캡처를 봤다
             </button>
           )}
         </div>

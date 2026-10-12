@@ -19,7 +19,7 @@ export function Reaction({ state, dispatch }: { state: GameState; dispatch: Disp
   const up = state.lastRepDelta >= 0
   return (
     <section>
-      <p className="kicker">갤 점수</p>
+      <p className="kicker">곡 반응</p>
       <div className="score-hero">
         <b>{track.score}</b>
         <small>/100</small>
@@ -51,11 +51,11 @@ export function Reaction({ state, dispatch }: { state: GameState; dispatch: Disp
           </p>
         ))}
       </div>
-      {track.shift === 'boom' && <div className="banner">노선 변경 개추. 본캐 찾음.</div>}
-      {track.shift === 'bust' && <div className="banner bust">노선 변경 비추. 유행만 쫓음.</div>}
+      {track.shift === 'boom' && <div className="banner">노선을 바꿨더니 반응이 좋다. 주력을 찾았다.</div>}
+      {track.shift === 'bust' && <div className="banner bust">노선을 바꿨더니 반응이 별로다. 유행만 쫓았다.</div>}
       {state.lastPerformNote && <p className="note">{state.lastPerformNote}</p>}
       <p className={up ? 'delta' : 'delta down'}>
-        정산 · 네임드 {up ? '+' : ''}
+        정산 · 이름값 {up ? '+' : ''}
         {state.lastRepDelta} · 앨범 {formatWon(track.money)}
       </p>
       <button className="btn btn-wide" style={{ marginTop: 16 }} type="button" onClick={() => dispatch({ type: 'ack-reaction' })}>
