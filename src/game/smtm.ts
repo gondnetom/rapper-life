@@ -1,17 +1,17 @@
-import { PRODUCERS, youtubeComments } from './content'
+import { PRODUCERS, producerNames, youtubeComments } from './content'
 import { clamp } from './format'
 import type { YoutubeResult } from './types'
 
 export type RoundKind = 'bar' | 'acapella' | 'team' | 'diss'
 
 export const SMTM_ROUNDS: { name: string; kind: RoundKind; bar: number; ripple: number; gig: number; prize: number }[] = [
-  { name: '참가 영상', kind: 'bar', bar: 42, ripple: 0.08, gig: 12_000, prize: 0 },
-  { name: '무반주 심사', kind: 'acapella', bar: 46, ripple: 0.1, gig: 18_000, prize: 0 },
-  { name: '불구덩이', kind: 'bar', bar: 52, ripple: 0.14, gig: 28_000, prize: 0 },
-  { name: '팀 선택', kind: 'team', bar: 0, ripple: 0.06, gig: 8_000, prize: 0 },
-  { name: '디스전', kind: 'diss', bar: 0, ripple: 0.18, gig: 40_000, prize: 0 },
-  { name: '본선', kind: 'bar', bar: 64, ripple: 0.22, gig: 70_000, prize: 0 },
-  { name: '파이널', kind: 'bar', bar: 74, ripple: 0.35, gig: 120_000, prize: 1_000_000_000 },
+  { name: '참가 영상', kind: 'bar', bar: 42, ripple: 0.08, gig: 80_000, prize: 0 },
+  { name: '무반주 심사', kind: 'acapella', bar: 46, ripple: 0.1, gig: 140_000, prize: 0 },
+  { name: '불구덩이', kind: 'bar', bar: 52, ripple: 0.14, gig: 280_000, prize: 0 },
+  { name: '팀 선택', kind: 'team', bar: 0, ripple: 0.06, gig: 60_000, prize: 0 },
+  { name: '디스전', kind: 'diss', bar: 0, ripple: 0.18, gig: 520_000, prize: 0 },
+  { name: '본선', kind: 'bar', bar: 64, ripple: 0.22, gig: 1_200_000, prize: 0 },
+  { name: '파이널', kind: 'bar', bar: 74, ripple: 0.35, gig: 3_600_000, prize: 1_000_000_000 },
 ]
 
 const VIEW_BASE = [8_000, 22_000, 60_000, 40_000, 180_000, 420_000, 900_000]
@@ -38,7 +38,7 @@ export function smtmSeasonLabel(clears: number): string {
 }
 
 export function smtmCareerLabel(bestClears: number, trash: boolean): string {
-  if (bestClears < 0 && trash) return '쇼미 비판'
+  if (bestClears < 0 && trash) return '뱀새끼 발언'
   if (bestClears < 0) return '불참'
   return smtmSeasonLabel(bestClears)
 }
@@ -88,7 +88,7 @@ export function buildYoutube(opts: {
     judgement: opts.judgement,
     rivalScore: opts.rivalScore,
     rivalName: opts.rivalName,
-    producer: producer.name,
+    producer: producerNames(producer),
     producerLine: producer.meme,
     seasonEarned: opts.seasonEarned,
   }

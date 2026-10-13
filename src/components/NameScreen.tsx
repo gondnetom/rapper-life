@@ -16,7 +16,7 @@ export function NameScreen({ dispatch }: { dispatch: Dispatch }) {
           event.preventDefault()
           const next = name.trim()
           if (!isRapName(next)) {
-            setError('이름은 한글, 영문, 숫자로 2자에서 12자까지다.')
+            setError('이름은 20자 이내로 정하면 된다.')
             return
           }
           dispatch({ type: 'set-name', name: next })
@@ -26,7 +26,7 @@ export function NameScreen({ dispatch }: { dispatch: Dispatch }) {
           <span>랩네임</span>
           <input
             value={name}
-            maxLength={12}
+            maxLength={20}
             autoComplete="off"
             placeholder="예: 야간버스"
             onChange={(event) => setName(event.target.value)}

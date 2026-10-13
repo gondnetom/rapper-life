@@ -16,7 +16,7 @@ function load(name: string): Promise<AudioBuffer | null> {
   const job = (async () => {
     const audio = context()
     if (!audio) return null
-    const response = await fetch(`/sfx/${name}.wav`)
+    const response = await fetch(`${import.meta.env.BASE_URL}sfx/${name}.wav`)
     if (!response.ok) return null
     const data = await response.arrayBuffer()
     const buffer = await audio.decodeAudioData(data)

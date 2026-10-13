@@ -1,6 +1,6 @@
 import { GENRE_LABEL } from './content'
 import { smtmCareerLabel } from './smtm'
-import { statLabel, topStat } from './format'
+import { eun, statLabel, topStat } from './format'
 import type { GameState } from './types'
 
 export function describeCareer(state: GameState): { title: string; blurb: string } {
@@ -14,17 +14,17 @@ export function describeCareer(state: GameState): { title: string; blurb: string
   if (state.tonicEnd) {
     return {
       title: '보약의 끝',
-      blurb: `${name}은 보약 때문에 먼저 끝났다. 곡보다 사고가 커리어를 닫았다.`,
+      blurb: `${eun(name)} 보약 때문에 먼저 끝났다. 곡보다 사고가 커리어를 닫았다.`,
     }
   }
   if (state.snakeTag && won) {
     return {
       title: '논란의 파이널',
-      blurb: `${name}은 쇼미를 욕해 놓고 그 무대에서 우승했다. 그 논란이 조회수가 됐다.`,
+      blurb: `${eun(name)} 쇼미를 욕해 놓고 그 무대에서 우승했다. 그 논란이 조회수가 됐다.`,
     }
   }
   if (won) {
-    return { title: '쇼미 본캐', blurb: `${name}은 파이널을 가져갔고, 잠깐은 국힙으로 불렸다.` }
+    return { title: '쇼미 본캐', blurb: `${eun(name)} 파이널을 가져갔고, 잠깐은 국힙으로 불렸다.` }
   }
   if (state.snakeTag && money >= 1_200_000) {
     return { title: '논란으로 밥벌이', blurb: '꼬리표는 붙었지만, 라이브 자리는 그대로 남았다.' }
@@ -65,7 +65,7 @@ export function describeCareer(state: GameState): { title: string; blurb: string
   if (state.genre === 'trap') {
     return { title: '808 본캐', blurb: '808 비트로 이름을 알렸다.' }
   }
-  return { title: '언더 평균', blurb: `${name}은 신입부터 황혼기까지 자기 속도로 버텼다. 제일 잘한 건 ${statLabel(top)}이다.` }
+  return { title: '언더 평균', blurb: `${eun(name)} 신입부터 황혼기까지 자기 속도로 버텼다. 제일 잘한 건 ${statLabel(top)}이다.` }
 }
 
 export { smtmCareerLabel }

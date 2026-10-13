@@ -1,13 +1,13 @@
 import { DISS_OPPONENTS, GENRE_LABEL, LABELS, SNAKE_EVENTS, genreDistance } from './content'
 import { prEventChance } from './economy'
-import { uid } from './format'
+import { iga, uid } from './format'
 import type { GameState, Genre, ModalEvent, Stats } from './types'
 
 export function shiftSwing(stats: Stats, from: Genre, to: Genre, reputation: number): {
   outcome: 'boom' | 'bust'
   magnitude: number
 } {
-  const skill = (stats.compose + stats.flow) / 2
+  const skill = (stats.compose + stats.lyric) / 2
   const roll = Math.random() * 30
   const swing = skill + roll - genreDistance(from, to) * 12
   return {
@@ -34,8 +34,8 @@ function featureEvent(state: GameState): ModalEvent {
   return {
     id: uid(),
     kind: 'feature',
-    title: '피처 요청',
-    body: `${host.name} 쪽에서 ${state.rapName}에게 피처를 요청했다. 받으면 라이브 제의가 오고, 벌스가 약하면 묻힌다.`,
+    title: '피처링 요청',
+    body: `${iga(host.name)} ${state.rapName}에게 피처링을 요청했다. 받으면 라이브 제의가 오고, 벌스가 약하면 묻힌다.`,
     rep: 0,
     money: 0,
     rivalName: host.name,

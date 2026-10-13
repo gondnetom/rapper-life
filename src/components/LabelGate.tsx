@@ -14,7 +14,7 @@ export function LabelGate({ state, dispatch }: { state: GameState; dispatch: Dis
         <div className="stack">
           <button className="choice" type="button" onClick={() => dispatch({ type: 'found-label' })}>
             <strong>{state.rapName} 레코드</strong>
-            <em>직접 차린다 · 보증금 6만 · 이후 정산은 내 간판</em>
+            <em>직접 차린다 · 보증금 18만 · 이후 정산은 내 간판</em>
           </button>
           <button className="btn-secondary btn-wide" type="button" onClick={() => dispatch({ type: 'stay-label' })}>
             {stay}

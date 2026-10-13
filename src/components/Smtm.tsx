@@ -10,7 +10,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
       <section>
         <p className="kicker">TEAM</p>
         <h1 className="screen-title">팀 선택</h1>
-        <p className="lede">프로듀서 네 팀 중 하나를 고른다. 고르면 그 뒤로 파급이 붙는다.</p>
+        <p className="lede">네 팀 중 하나를 고른다. 각 팀에 프로듀서가 두 명이다. 고르면 그 뒤로 파급이 붙는다.</p>
         <div className="stack">
           {PRODUCERS.map((producer) => (
             <button
@@ -19,9 +19,8 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
               type="button"
               onClick={() => dispatch({ type: 'smtm-team', id: producer.id })}
             >
-              <b>
-                {producer.name} · {producer.team}
-              </b>
+              <b>{producer.team}</b>
+              <span>{producer.names.join(', ')}</span>
               <span>{producer.meme}</span>
             </button>
           ))}
@@ -92,7 +91,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
       <h1 className="screen-title">쇼미더머니</h1>
       <p className="lede">
         {state.smtmTrashTalk
-          ? '예전에 쇼미가 쓰레기라고 깎아 놨다. 지금 나가면 그 말이 닉 앞에 붙는다.'
+          ? '예전에 쇼미를 뱀새끼라고 깎아 놨다. 지금 나가면 그 말이 닉 앞에 붙는다.'
           : '파이널 상금은 10억이다. 라운드를 넘기면 파급이 붙고, 중간에 떨어지면 시즌이 끝난다. 망하면 여기서 시즌이 닫힌다.'}
       </p>
       <div className="stack">
@@ -116,7 +115,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
         </button>
         {!state.smtmTrashTalk && (
           <button className="btn-ghost btn-wide" type="button" onClick={() => dispatch({ type: 'smtm-trash' })}>
-            쇼미가 쓰레기라고 말한다
+            쇼미를 뱀새끼라고 말한다
           </button>
         )}
       </div>

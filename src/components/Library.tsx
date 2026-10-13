@@ -3,8 +3,8 @@ import { loadCover } from '../audio/covers'
 import { playTake, stopTake } from '../audio/takes'
 import { shareAlbum } from '../lib/albumShare'
 import { GENRE_LABEL, PHASES, groupTimeline } from '../game/content'
-import { formatRep, formatWon, statLabel } from '../game/format'
-import type { GameState, StatKey, TimelineItem, Track } from '../game/types'
+import { formatRep, formatWon, statLabel, VISIBLE_STATS } from '../game/format'
+import type { GameState, TimelineItem, Track } from '../game/types'
 import type { Dispatch } from '../game/reducer'
 
 function CoverFace({ track, playing }: { track: Track; playing: boolean }) {
@@ -34,7 +34,6 @@ function CoverFace({ track, playing }: { track: Track; playing: boolean }) {
   )
 }
 
-const STATS: StatKey[] = ['lyric', 'compose', 'flow', 'club', 'pr']
 
 export function CareerTimeline({ items }: { items: TimelineItem[] }) {
   const groups = groupTimeline(items)
@@ -143,7 +142,7 @@ export function LogView({ state, dispatch }: { state: GameState; dispatch: Dispa
     <section>
       <h1 className="screen-title">기록</h1>
       <div className="stats">
-        {STATS.map((key) => (
+        {VISIBLE_STATS.map((key) => (
           <div className="stat" key={key}>
             <span>{statLabel(key)}</span>
             <div className="bar">

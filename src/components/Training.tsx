@@ -1,9 +1,7 @@
 import { GENRES, GENRE_LABEL, PHASES, TRAIN_ACTIONS } from '../game/content'
-import { euro, statLabel } from '../game/format'
-import type { GameState, StatKey } from '../game/types'
+import { euro, statLabel, VISIBLE_STATS } from '../game/format'
+import type { GameState } from '../game/types'
 import type { Dispatch } from '../game/reducer'
-
-const STATS: StatKey[] = ['lyric', 'compose', 'flow', 'club', 'pr']
 
 export function Training({ state, dispatch }: { state: GameState; dispatch: Dispatch }) {
   const phase = PHASES[state.phase]
@@ -20,7 +18,7 @@ export function Training({ state, dispatch }: { state: GameState; dispatch: Disp
         </div>
       </div>
       <div className="stats">
-        {STATS.map((key) => (
+        {VISIBLE_STATS.map((key) => (
           <div className="stat" key={key}>
             <span>{statLabel(key)}</span>
             <div className="bar">
@@ -86,10 +84,10 @@ export function EventSheet({ state, dispatch }: { state: GameState; dispatch: Di
           {modal.kind === 'feature' && (
             <>
               <button className="btn btn-wide" type="button" onClick={() => dispatch({ type: 'resolve-event', choice: 'accept' })}>
-                피처 받는다
+                피처링 받는다
               </button>
               <button className="btn-secondary btn-wide" type="button" onClick={() => dispatch({ type: 'resolve-event', choice: 'pass' })}>
-                피처 거절
+                피처링 거절
               </button>
             </>
           )}

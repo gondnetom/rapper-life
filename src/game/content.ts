@@ -1,3 +1,4 @@
+import { eun } from './format'
 import type { Genre, StatKey, Stats, TimelineItem, TrainId } from './types'
 
 export const GENRE_LABEL: Record<Genre, string> = {
@@ -29,14 +30,30 @@ export function groupTimeline(items: TimelineItem[]): { phase: number; name: str
 }
 
 export const DISS_OPPONENTS = [
-  { name: '빈지노프', line: '옷깃만 잡았네. 벌스는 매장에 두고 왔냐.' },
-  { name: '창모에', line: '훅은 중독인데, 이름은 자동완성이 안 된다.' },
-  { name: '머쉬베놈스', line: '중얼거림으로 여기까지 왔으면 이제 발음을 보여라.' },
-  { name: '키드밀', line: '속도만 빠르고 펀치라인은 따라오질 않는다.' },
-  { name: '슈퍼비이', line: '자랑은 좋은데, 오늘 무대는 통장 잔고가 아니다.' },
-  { name: '식케', line: '영어 라임 하나 던지고 끝낼 생각이면 늦었다.' },
-  { name: '염따임', line: '훅은 시장통인데, 벌스는 아직 재고다.' },
-  { name: '언에듀', line: '분노는 있는데 포켓이 없으면 그냥 소리지른 거다.' },
+  { name: '빈지노', line: '옷깃만 잡지 말고 벌스를 가져와라.' },
+  { name: '창모', line: '훅은 내가 가져간다. 너는 벌스로 버텨 봐.' },
+  { name: '머쉬베놈', line: '박자는 내가 잡고 있다. 너는 어디 있냐.' },
+  { name: '키드밀리', line: '오늘 템포는 내가 정한다. 따라올 수 있으면 와라.' },
+  { name: '슈퍼비', line: '오늘 무대는 잔고 자랑이 아니다. 마이크로 말해라.' },
+  { name: '식케이', line: '한 단어로 끝낼 생각이면 늦었다. 벌스를 채워라.' },
+  { name: '염따', line: '훅은 내가 쉽게 남긴다. 너는 후렴 하나만 가져와 봐.' },
+  { name: '더콰이엇', line: '샘플 위에서 밀리면 끝이다. 라임을 앉아라.' },
+  { name: '팔로알토', line: '길게 늘인다고 벌스가 되는 게 아니다. 한 줄을 남겨 봐.' },
+  { name: '딥플로우', line: '속도보다 밀도가 이긴다. 오늘 그걸 보여 봐.' },
+  { name: '넉살', line: '펀치는 짧게 친다. 너는 몇 줄이나 버티냐.' },
+  { name: '이센스', line: '이야기로 밀 수 있으면 들어와라. 말만 길면 진다.' },
+  { name: '기리보이', line: '감각만으로는 한 라운드다. 그다음 벌스를 내놔라.' },
+  { name: '자이언티', line: '멜로디에 기대지 마라. 오늘은 랩으로 승부다.' },
+  { name: '박재범', line: '무대는 국제 대회가 아니다. 이 마이크에서 이겨라.' },
+  { name: '비와이', line: '큰 목청만으로는 안 된다. 박자 안에 넣어라.' },
+  { name: '치타', line: '세다고 이긴 게 아니다. 한 소절을 남겨 봐.' },
+  { name: '제시', line: '태도로 밀지 마라. 벌스가 먼저다.' },
+  { name: '씨잼', line: '비트 위에서 놀 생각이면 늦었다. 가사를 얹어라.' },
+  { name: '산이', line: '흥만 있으면 후렴이다. 벌스까지 가져와라.' },
+  { name: '우원재', line: '중얼거림 뒤에 문장이 있어야 한다. 오늘은 그게 심사다.' },
+  { name: '윤미래', line: '목청으로 덮지 마라. 가사도 같이 들려라.' },
+  { name: '화나', line: '톤만 세면 컨셉이다. 라임까지 보여라.' },
+  { name: '스윙스', line: '각오 없이 마이크 잡았으면 내려놔라.' },
 ]
 
 export const RIVALS = DISS_OPPONENTS.map((item) => item.name)
@@ -49,21 +66,25 @@ export const LABELS = [
 
 export function labelOffers(rep: number): { name: string; line: string; advance: number }[] {
   const table = [
-    { name: '일리네르', min: 30, base: 240_000, line: '제일 무거운 계약이다. 선급이 크고, 앨범 정산이 따라온다.' },
-    { name: '저스트튠', min: 18, base: 140_000, line: '라이브 자리가 먼저 붙는다. 선급은 중간이다.' },
-    { name: '하이리트', min: 8, base: 60_000, line: '아직 이름이 작은 사람을 밀어 준다. 선급은 작고, 자리는 생긴다.' },
+    { name: '일리네르', min: 30, base: 1_800_000, line: '제일 무거운 계약이다. 선급이 크고, 앨범 정산이 따라온다.' },
+    { name: '저스트튠', min: 18, base: 900_000, line: '라이브 자리가 먼저 붙는다. 선급은 중간이다.' },
+    { name: '하이리트', min: 8, base: 320_000, line: '아직 이름이 작은 사람을 밀어 준다. 선급은 작고, 자리는 생긴다.' },
   ]
   return table
     .filter((item) => rep >= item.min)
-    .map((item) => ({ name: item.name, line: item.line, advance: item.base + rep * 2_000 }))
+    .map((item) => ({ name: item.name, line: item.line, advance: item.base + rep * 18_000 }))
 }
 
 export const PRODUCERS = [
-  { id: 'doki', name: '도키', team: '팀 도키', meme: '음원 얘기는 나중에 해. 지금은 실력부터 까인다.' },
-  { id: 'swingz', name: '스윙즈', team: '팀 스윙즈', meme: '마이크를 놓치면 탈락이다. 각오 없으면 나가.' },
-  { id: 'grayson', name: '그레이슨', team: '팀 그레이슨', meme: '멜로디만 있고 래퍼가 안 보인다. 벌스로 인정받아.' },
-  { id: 'codeart', name: '코드아트', team: '팀 코드아트', meme: '비트가 세면 네가 밀린다. 오늘은 네가 비트를 밀어.' },
+  { id: 'doki', names: ['도끼', '더콰이엇'], team: '팀 도끼', meme: '음원 얘기는 나중에 해. 지금은 실력부터 본다.' },
+  { id: 'swingz', names: ['스윙스', '기리보이'], team: '팀 스윙스', meme: '마이크를 놓치면 탈락이다. 각오 없으면 나가라.' },
+  { id: 'grayson', names: ['그레이', '자이언티'], team: '팀 그레이', meme: '멜로디만 있고 래퍼가 안 보인다. 벌스로 인정받아라.' },
+  { id: 'codeart', names: ['코드쿤스트', '팔로알토'], team: '팀 코드쿤스트', meme: '비트가 세면 네가 밀린다. 오늘은 네가 비트를 밀어라.' },
 ]
+
+export function producerNames(producer: { names: string[] }): string {
+  return producer.names.join(', ')
+}
 
 export interface Origin {
   id: string
@@ -82,7 +103,7 @@ export const ORIGINS: Origin[] = [
     entry: '전단지보다 CD',
     stats: { lyric: 24, compose: 14, flow: 16, club: 10, pr: 8 },
     story:
-      '{name}은 홍대에서 힙합을 시작했다. 전단지보다 형의 CD가 먼저였다. 붐뱁을 주력으로 잡았고, 저음보다 가사가 먼저 들렸다.',
+      '{name} 홍대에서 힙합을 시작했다. 전단지보다 형의 CD가 먼저였다. 붐뱁을 주력으로 잡았고, 저음보다 가사가 먼저 들렸다.',
   },
   {
     id: 'gangnam',
@@ -91,7 +112,7 @@ export const ORIGINS: Origin[] = [
     entry: '808이 먼저',
     stats: { lyric: 12, compose: 16, flow: 18, club: 22, pr: 18 },
     story:
-      '{name}은 강남 클럽에서 시작했다. 문장보다 808이 먼저 가슴을 밀었다. 트랩을 주력으로 잡았고, 계산서보다 저음이 남았다.',
+      '{name} 강남 클럽에서 시작했다. 문장보다 808이 먼저 가슴을 밀었다. 트랩을 주력으로 잡았고, 계산서보다 저음이 남았다.',
   },
   {
     id: 'sinrim',
@@ -100,7 +121,7 @@ export const ORIGINS: Origin[] = [
     entry: '원룸 숏폼',
     stats: { lyric: 10, compose: 18, flow: 14, club: 8, pr: 22 },
     story:
-      '{name}은 신림 원룸에서 숏폼으로 시작했다. 가사는 안 들리고 오토튠만 또렷했다. 멍청트랩은 고른 장르가 아니라, 방이 좁아서 그렇게 됐다.',
+      '{name} 신림 원룸에서 숏폼으로 시작했다. 가사는 안 들리고 오토튠만 또렷했다. 멍청트랩은 고른 장르가 아니라, 방이 좁아서 그렇게 됐다.',
   },
   {
     id: 'incheon',
@@ -109,7 +130,7 @@ export const ORIGINS: Origin[] = [
     entry: '야간 소음',
     stats: { lyric: 14, compose: 12, flow: 22, club: 16, pr: 10 },
     story:
-      '{name}은 인천 야간 영상으로 시작했다. 해외 라이브는 노래가 아니라 소음이었다. 그래서 레이지를 주력으로 잡았다. 힙합은 참는 장르가 아니다.',
+      '{name} 인천 야간 영상으로 시작했다. 해외 라이브는 노래가 아니라 소음이었다. 그래서 레이지를 주력으로 잡았다. 힙합은 참는 장르가 아니다.',
   },
 ]
 
@@ -117,10 +138,10 @@ export const TRAIN_ACTIONS: { id: TrainId; label: string; stat: StatKey; detail:
   { id: 'lyric', label: '라임 연습', stat: 'lyric', detail: '노트에 라임을 채운다' },
   { id: 'compose', label: '비트 작업', stat: 'compose', detail: '킥이랑 808을 만진다' },
   { id: 'club', label: '클럽 공연', stat: 'club', detail: '밤에 직접 라이브를 한다' },
-  { id: 'battle', label: '배틀 구경', stat: 'flow', detail: '포켓을 눈으로 익힌다' },
+  { id: 'battle', label: '랩레슨하기', stat: 'lyric', detail: '선배 앞에서 랩을 배운다' },
   { id: 'insta', label: '인스타', stat: 'pr', detail: '스토리로 이름을 알린다' },
-  { id: 'throat', label: '목상태', stat: 'flow', detail: '성대를 아끼고 포켓을 유지한다' },
-  { id: 'tonic', label: '보약', stat: 'flow', detail: '반반이다. 되면 스탯이 전부 오르고, 실패하면 커리어가 끝난다' },
+  { id: 'throat', label: '목상태', stat: 'club', detail: '성대를 아끼고 라이브를 유지한다' },
+  { id: 'tonic', label: '보약', stat: 'flow', detail: '세 번 중 두 번은 된다. 되면 스탯이 전부 오르고, 실패하면 커리어가 끝난다' },
 ]
 
 const INSTA_SUCCESS = [
@@ -140,9 +161,9 @@ const TRAIN_SUCCESS: Record<TrainId, string> = {
   lyric: '라임이 하나 붙었다.',
   compose: '킥이 자리에 앉아서 비트가 올랐다.',
   club: '클럽 공연이 먹혔다. 다음 주도 서라고 한다.',
-  battle: '포켓이 귀에 남아서 실력이 올랐다.',
+  battle: '랩 레슨이 먹혀서 라임이 늘었다.',
   insta: INSTA_SUCCESS[0],
-  throat: '목이 풀려서 포켓이랑 라이브가 조금 올랐다.',
+  throat: '목이 풀려서 라이브가 조금 올랐다.',
   tonic: '보약이 먹혀서 스탯이 전부 올랐다.',
 }
 
@@ -150,7 +171,7 @@ const TRAIN_FAIL: Record<TrainId, string> = {
   lyric: '라임이 중간에 끊겼다.',
   compose: '808이 킥을 잡아먹었다.',
   club: '공연이 잘렸다. 관객이 등을 돌렸다.',
-  battle: '배틀을 구경하다가 박자만 놓쳤다.',
+  battle: '레슨에서 박자만 놓쳤다.',
   insta: INSTA_FAIL[0],
   throat: '목이 잠겼다. 오늘은 쉬는 게 낫다.',
   tonic: '보약이 목을 닫아서 커리어가 끝났다.',
@@ -160,6 +181,7 @@ export const BRIEF_ACTIONS = new Set([
   '라임 연습',
   '비트 작업',
   '클럽 공연',
+  '랩레슨하기',
   '배틀 구경',
   '인스타',
   '목상태',
@@ -233,7 +255,7 @@ const HIP_GENERAL: Record<'low' | 'mid' | 'high', string[]> = {
     '명반이라고 할 곡은 아니다. 듣기는 한다.',
   ],
   high: [
-    '인정한다. 둘째 마디부터 포켓이 앉는다.',
+    '인정한다. 둘째 마디부터 박자가 앉는다.',
     '한 줄이 남아서, 댓글 달고 다시 듣는 중이다.',
     '이 사람을 왜 이제 봤나. 언더에 묻히기 아깝다.',
     '국힙에서 이 벌스면 상위권이다.',
@@ -255,7 +277,7 @@ const HIP_GENRE: Record<Genre, Record<'low' | 'mid' | 'high', string[]>> = {
   },
   trap: {
     low: ['808만 크고 랩은 안 실린다.', '하이햇만 빠르고 벌스는 허공이다.'],
-    mid: ['808은 클럽에서 통한다. 랩은 아직 언더다.', '트랩 포켓은 타는데 훅이 약하다.'],
+    mid: ['808은 클럽에서 통한다. 랩은 아직 언더다.', '트랩 박자는 타는데 훅이 약하다.'],
     high: ['808 위에서 안 밀린다. 클럽에 틀 만하다.', '하이햇 사이에 라임이 들어간다. 인정한다.'],
   },
   mumble: {
@@ -264,7 +286,7 @@ const HIP_GENRE: Record<Genre, Record<'low' | 'mid' | 'high', string[]>> = {
     high: ['안 들려도 훅이 남는다. 컨셉은 성공이다.', '오토튠 안에서도 라임이 보인다. 인정한다.'],
   },
   rage: {
-    low: ['소리지른다고 레이지는 아니다. 포켓이 없다.', '왜곡만 세고 랩은 갈라진다.'],
+    low: ['소리지른다고 레이지는 아니다. 박자가 없다.', '왜곡만 세고 랩은 갈라진다.'],
     mid: ['에너지는 있는데 한 소절이 안 남는다.', '레이지 톤은 맞는데 벌스가 짧다.'],
     high: ['질러도 박자 안에 있다. 레이지가 맞다.', '왜곡된 808을 랩이 밀어낸다. 인정한다.'],
   },
@@ -285,31 +307,31 @@ export function hipgalLines(
     if (lines.length >= 3) break
     if (!lines.includes(extra)) lines.push(extra)
   }
-  if (shift === 'boom') lines[0] = '노선을 바꿨는데 포켓이 따라간다. 이게 주력이었나 보다.'
+  if (shift === 'boom') lines[0] = '노선을 바꿨는데 박자가 따라간다. 이게 주력이었나 보다.'
   if (shift === 'bust') lines[0] = '유행만 쫓았다. 예전 노선이 주력이었다.'
-  if (snake) lines[2] = `${name} 곡보다 예전 발언 캡처가 위에 뜬다.`
-  else if (lines[2] && Math.random() < 0.34) lines[2] = `${name} ${lines[2]}`
+  if (snake) lines[2] = `${eun(name)} 낸 곡보다 예전 발언 캡처가 위에 뜬다.`
+  else if (lines[2] && Math.random() < 0.34) lines[2] = `${eun(name)} ${lines[2]}`
   return lines.slice(0, 3)
 }
 
 export function rhythmLines(score: number, shift: 'boom' | 'bust' | null): string[] {
   const tone = score < 55 ? 'low' : score < 92 ? 'mid' : 'high'
   const lines = {
-    low: ['포켓이 킥 뒤에서 헤맨다. 라임도 끊긴다.', '음절이 줄마다 다르다. 그루브가 안 앉는다.'],
+    low: ['박자가 킥 뒤에서 헤맨다. 라임도 끊긴다.', '음절이 줄마다 다르다. 그루브가 안 앉는다.'],
     mid: ['그루브는 타는데 라임 밀도가 성기다.', '발음은 들린다. 벌스 후반 숨만 정리하면 된다.'],
-    high: ['라임이랑 포켓이 맞는다. 믹스만 정리하면 클럽에 튼다.', '줄 끝 모음이 안정적이다. 랩이 비트를 민다.'],
+    high: ['라임이랑 박자가 맞는다. 믹스만 정리하면 클럽에 튼다.', '줄 끝 모음이 안정적이다. 랩이 비트를 민다.'],
   }[tone]
   const picked = take(lines, 2)
-  if (shift === 'boom') picked[0] = '노선 변경이 억지가 아니다. 새 포켓에 랩이 앉는다.'
+  if (shift === 'boom') picked[0] = '노선 변경이 억지가 아니다. 새 박자에 랩이 앉는다.'
   if (shift === 'bust') picked[0] = '장르만 바뀌고 랩은 예전 노선에 남았다.'
   return picked
 }
 
 export function trashReactions(name: string): string {
   const lines = [
-    `${name}은 쇼미에 안 나간다면서 태도만 크다. 그 말이 저장될 것 같다.`,
-    '그 발언이 캡처된다고 댓글이 달린다.',
-    '쇼미가 쓰레기라는 말이 이름보다 먼저 돈다.',
+    `${eun(name)} 쇼미에 나갔으면서 뱀새끼라고 깐다. 그 말이 저장될 것 같다.`,
+    '나갔던 사람이 뱀새끼라고 하니 캡처가 돈다.',
+    '쇼미를 뱀새끼라고 한 말이 이름보다 먼저 돈다.',
   ]
   return lines[Math.floor(Math.random() * lines.length)]
 }
@@ -328,7 +350,7 @@ export function youtubeComments(name: string, passed: boolean, snake: boolean, r
       ]
   if (opponent) base[1] = `${opponent}한테 이름을 불리고 끝났다. 캡처가 돌 것 같다.`
   if (snake) {
-    base[0] = passed ? `쇼미 욕해 놓고 올라온 ${name}` : '예전 욕 때문에 들어왔다가 떨어졌다.'
+    base[0] = passed ? `쇼미를 뱀새끼라 해 놓고 올라온 ${name}` : '뱀새끼 발언 때문에 들어왔다가 떨어졌다.'
     base.push('논란 때문에 조회수는 터졌다.')
   }
   return base.slice(0, 3)
@@ -337,7 +359,7 @@ export function youtubeComments(name: string, passed: boolean, snake: boolean, r
 export const SNAKE_EVENTS = [
   {
     title: '과거 발언 캡처',
-    body: '쇼미가 쓰레기라고 했던 문장이 다시 돌고, 해명 댓글은 묻힌다.',
+    body: '쇼미를 뱀새끼라고 했던 문장이 다시 돌고, 해명 댓글은 묻힌다.',
     rep: -3,
     money: 0,
   },

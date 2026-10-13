@@ -60,7 +60,7 @@ export function Stage({
     setElapsed(0)
     const rec = startRecording({
       lyrics: state.draftLyrics,
-      flow: state.stats.flow,
+      flow: state.stats.lyric,
       club: state.stats.club,
       getAccents: () => engine.accents,
       audioContext: engine.ensure(),
@@ -89,9 +89,14 @@ export function Stage({
         <i style={{ width: `${Math.min(100, level * 420)}%` }} />
       </div>
       {!recording ? (
-        <button className="record" type="button" onClick={begin}>
-          시작
-        </button>
+        <div className="row-actions">
+          <button className="record" type="button" onClick={begin}>
+            시작
+          </button>
+          <button className="btn-secondary" type="button" onClick={() => dispatch({ type: 'skip-stage' })}>
+            넘기기
+          </button>
+        </div>
       ) : (
         <button className="record stop" type="button" onClick={() => session.current?.stop()}>
           종료

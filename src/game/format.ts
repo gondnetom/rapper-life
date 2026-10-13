@@ -49,16 +49,19 @@ export function repLabel(rep: number): string {
 }
 
 export function isRapName(name: string): boolean {
-  return /^[0-9A-Za-z가-힣]{2,12}$/.test(name)
+  const next = name.trim()
+  return next.length >= 1 && next.length <= 20
 }
 
+export const VISIBLE_STATS: StatKey[] = ['lyric', 'compose', 'club', 'pr']
+
 export function topStat(stats: Stats): StatKey {
-  const keys: StatKey[] = ['lyric', 'compose', 'flow', 'club', 'pr']
-  return keys.reduce((best, key) => (stats[key] > stats[best] ? key : best))
+  return VISIBLE_STATS.reduce((best, key) => (stats[key] > stats[best] ? key : best))
 }
 
 export function avgStat(stats: Stats): number {
-  return (stats.lyric + stats.compose + stats.flow + stats.club + stats.pr) / 5
+  const total = VISIBLE_STATS.reduce((sum, key) => sum + stats[key], 0)
+  return total / VISIBLE_STATS.length
 }
 
 const STAT_LABEL: Record<StatKey, string> = {
@@ -73,13 +76,19 @@ export function statLabel(key: StatKey): string {
   return STAT_LABEL[key]
 }
 
-function hasBatchim(word: string): boolean {
+function jongseong(word: string): number {
   const last = word.charCodeAt(word.length - 1)
-  return last >= 0xac00 && last <= 0xd7a3 && (last - 0xac00) % 28 !== 0
+  if (last < 0xac00 || last > 0xd7a3) return 0
+  return (last - 0xac00) % 28
+}
+
+function hasBatchim(word: string): boolean {
+  return jongseong(word) !== 0
 }
 
 export function euro(word: string): string {
-  return `${word}${hasBatchim(word) ? '으로' : '로'}`
+  const j = jongseong(word)
+  return `${word}${j === 0 || j === 8 ? '로' : '으로'}`
 }
 
 export function eul(word: string): string {
@@ -88,4 +97,12 @@ export function eul(word: string): string {
 
 export function wa(word: string): string {
   return `${word}${hasBatchim(word) ? '과' : '와'}`
+}
+
+export function iga(word: string): string {
+  return `${word}${hasBatchim(word) ? '이' : '가'}`
+}
+
+export function eun(word: string): string {
+  return `${word}${hasBatchim(word) ? '은' : '는'}`
 }

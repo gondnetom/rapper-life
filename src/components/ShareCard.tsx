@@ -3,7 +3,7 @@ import { loadCover } from '../audio/covers'
 import { paintAlbumCard } from '../lib/albumShare'
 import { describeCareer, smtmCareerLabel } from '../game/archetype'
 import { BRIEF_ACTIONS, GENRE_LABEL, ORIGINS, PHASES, PRODUCERS, groupTimeline } from '../game/content'
-import { formatRep, formatWon, statLabel, topStat, wa } from '../game/format'
+import { euro, formatRep, formatWon, statLabel, topStat, wa } from '../game/format'
 import { signatureLine } from '../game/lyricsScore'
 import type { GameState, Genre, YoutubeResult } from '../game/types'
 
@@ -57,7 +57,7 @@ function showMeLine(state: GameState): string {
   if (state.smtmBestClears < 0 && state.smtmTrashTalk) return '쇼미에는 나가지 않고 욕만 했다.'
   if (state.smtmBestClears < 0) return '쇼미에는 나가지 않았다.'
   if (state.smtmBestClears >= 7) return '쇼미는 파이널에서 우승했다.'
-  return `쇼미는 ${smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk)}으로 끝났다.`
+  return `쇼미는 ${euro(smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk))} 끝났다.`
 }
 
 function biography(state: GameState): string[] {
@@ -243,7 +243,7 @@ function opponentLine(clip: YoutubeResult) {
 }
 
 function producerLine(clip: YoutubeResult) {
-  const team = PRODUCERS.find((item) => item.name === clip.producer)?.team
+  const team = PRODUCERS.find((item) => item.names.some((name) => clip.producer.includes(name)))?.team
   if (team && !clip.producerLine.includes(team)) return `프로듀서는 ${clip.producer}, 소속은 ${team}.`
   return `프로듀서는 ${clip.producer}.`
 }

@@ -1,7 +1,7 @@
 import { DISS_OPPONENTS, GENRE_LABEL, ORIGINS, PHASES, PRODUCERS, TRAIN_ACTIONS, hipgalLines, labelOffers, rhythmLines, trainNotice, trashReactions } from './content'
-import { releasePayout } from './economy'
+import { payScale, releasePayout } from './economy'
 import { forcedEvent, rollTrainingEvent, shiftModal, shiftSwing } from './events'
-import { capRep, capStat, eul, euro, formatWon, isRapName, rhythmMark, statLabel, uid, wa } from './format'
+import { capRep, capStat, eul, eun, euro, formatWon, isRapName, rhythmMark, statLabel, uid, wa } from './format'
 import { scoreLyrics } from './lyricsScore'
 import { freshState } from './storage'
 import { SMTM_ROUNDS, buildYoutube, rivalPower, roundPassed, smtmSeasonLabel } from './smtm'
@@ -18,7 +18,8 @@ export type Action =
   | { type: 'resolve-event'; choice: string }
   | { type: 'set-draft'; title?: string; lyrics?: string; coverId?: string | null }
   | { type: 'submit-release' }
-  | { type: 'finish-release'; result: PerformResult; audioId: string | null }
+  | { type: 'skip-stage' }
+  | { type: 'finish-release'; result: PerformResult; audioId: string | null; skipped?: boolean }
   | { type: 'ack-reaction' }
   | { type: 'pick-label'; name: string | null }
   | { type: 'found-label' }
@@ -28,7 +29,7 @@ export type Action =
   | { type: 'smtm-trash' }
   | { type: 'smtm-team'; id: string }
   | { type: 'submit-smtm' }
-  | { type: 'finish-smtm'; result: PerformResult }
+  | { type: 'finish-smtm'; result: PerformResult; skipped?: boolean }
   | { type: 'ack-youtube' }
   | { type: 'set-tab'; tab: GameState['tab'] }
   | { type: 'set-beat'; on: boolean }
@@ -43,11 +44,40 @@ function performScore(state: GameState, lyrics: string, target: number, result: 
   let perform = result.score
   let note = ''
   if (result.micMissing) {
-    perform = Math.max(20, Math.min(74, state.stats.flow * 0.45 + state.stats.club * 0.35 + 10))
-    note = '마이크가 안 열려서, 포켓이랑 라이브로 공연 점수를 메웠다.'
+    perform = Math.max(20, Math.min(74, state.stats.lyric * 0.45 + state.stats.club * 0.35 + 10))
+    note = '마이크가 안 열려서, 라임이랑 라이브로 공연 점수를 메웠다.'
   }
   const score = Math.max(0, Math.min(100, writing * 0.45 + perform * 0.55))
   return { writing, perform, score, note }
+}
+
+function skipPerform(state: GameState, lyrics: string, target: number) {
+  const writing = scoreLyrics(lyrics, target, state.stats.lyric)
+  const perform = Math.max(38, Math.min(68, 42 + state.stats.lyric * 0.12 + state.stats.club * 0.1))
+  const score = Math.max(0, Math.min(100, writing * 0.45 + perform * 0.55))
+  return { writing, perform, score, note: '녹음을 넘겼다. 가사랑 실력으로 중간 점수를 받았다.' }
+}
+
+function emptySkip(): PerformResult {
+  return {
+    micMissing: true,
+    recognitionFailed: true,
+    transcript: '',
+    overlap: 0,
+    timing: 0,
+    energy: 0,
+    score: 0,
+    blob: null,
+  }
+}
+
+function scalePay(state: GameState, amount: number): number {
+  return Math.round(amount * payScale({
+    reputation: state.reputation,
+    phase: state.phase,
+    smtmBestClears: state.smtmBestClears,
+    buzz: state.buzz,
+  }))
 }
 
 function assignBeat(state: GameState): GameState {
@@ -193,7 +223,7 @@ function reduce(state: GameState, action: Action): GameState {
         money: 40_000,
         reputation: 8,
         screen: 'story',
-        originStory: origin.story.replaceAll('{name}', state.rapName),
+        originStory: origin.story.replaceAll('{name}', eun(state.rapName)),
         timeline: [],
       }
     }
@@ -221,7 +251,7 @@ function reduce(state: GameState, action: Action): GameState {
       const spec = TRAIN_ACTIONS.find((item) => item.id === action.id)
       if (!spec) return state
       if (action.id === 'tonic') {
-        const hit = Math.random() < 0.5
+        const hit = Math.random() < 2 / 3
         if (!hit) {
           const detail = trainNotice('tonic', false)
           return endCareer(state, detail, '보약', detail)
@@ -240,22 +270,21 @@ function reduce(state: GameState, action: Action): GameState {
         }
         return afterTrain(next)
       }
-      const primary = action.id === 'throat' ? (state.stats.flow + state.stats.club) / 2 : state.stats[spec.stat]
+      const primary = state.stats[spec.stat]
       const chance = action.id === 'throat' ? 0.8 : Math.max(0.36, Math.min(0.9, 0.4 + primary / 230))
       const ok = Math.random() < chance
       const stats = { ...state.stats }
       let money = state.money
       let reputation = state.reputation
       if (ok && action.id === 'throat') {
-        stats.flow = capStat(stats.flow + 4)
-        stats.club = capStat(stats.club + 3)
+        stats.club = capStat(stats.club + 5)
       } else if (ok && action.id === 'insta') {
         stats.pr = capStat(stats.pr + 8 + Math.floor(Math.random() * 4))
-        money += Math.round(8_000 * (1 + state.phase) * (1 + stats.pr / 140) * state.buzz)
+        money += scalePay({ ...state, stats }, 28_000 * (1 + stats.pr / 90))
         reputation = capRep(reputation + 1)
       } else if (ok && action.id === 'club') {
         stats.club = capStat(stats.club + 6 + Math.floor(Math.random() * 4))
-        money += Math.round(14_000 * (1 + state.phase) * (1 + stats.club / 120) * state.buzz)
+        money += scalePay({ ...state, stats }, 48_000 * (1 + stats.club / 80))
         reputation = capRep(reputation + 1)
       } else if (ok) {
         stats[spec.stat] = capStat(stats[spec.stat] + 6 + Math.floor(Math.random() * 4))
@@ -295,9 +324,18 @@ function reduce(state: GameState, action: Action): GameState {
       if (!title || !/[가-힣]/.test(lyrics)) return state
       return { ...state, draftTitle: title, screen: 'stage', tab: 'now' }
     }
+    case 'skip-stage': {
+      const skipped = skipPerform(state, state.draftLyrics, state.screen === 'smtmStage' ? 2 : 4)
+      const result: PerformResult = { ...emptySkip(), score: skipped.perform }
+      if (state.screen === 'smtmStage') return reduce(state, { type: 'finish-smtm', result, skipped: true })
+      if (state.screen === 'stage') return reduce(state, { type: 'finish-release', result, audioId: null, skipped: true })
+      return state
+    }
     case 'finish-release': {
       if (!state.genre) return state
-      const judged = performScore(state, state.draftLyrics, 4, action.result)
+      const judged = action.skipped
+        ? skipPerform(state, state.draftLyrics, 4)
+        : performScore(state, state.draftLyrics, 4, action.result)
       const payout = releasePayout({
         phase: state.phase,
         score: judged.score,
@@ -306,6 +344,7 @@ function reduce(state: GameState, action: Action): GameState {
         reputation: state.reputation,
         shift: state.pendingShift,
         buzz: state.buzz,
+        smtmBestClears: state.smtmBestClears,
       })
       const shift = state.pendingShift?.outcome ?? null
       const track = {
@@ -389,7 +428,7 @@ function reduce(state: GameState, action: Action): GameState {
     }
     case 'found-label': {
       if (state.screen !== 'labelFuture') return state
-      const cost = state.money >= 60_000 ? 60_000 : 0
+      const cost = state.money >= 180_000 ? 180_000 : 0
       const name = `${state.rapName} 레코드`
       return beginPhase(
         {
@@ -435,7 +474,7 @@ function reduce(state: GameState, action: Action): GameState {
         ...state,
         smtmTrashTalk: true,
         notice: trashReactions(state.rapName),
-        timeline: [...state.timeline, line(state, '쇼미 쓰레기 발언', '나가지 않으면서 쇼미를 깎았다. 그 말이 캡처되기 쉽다.')],
+        timeline: [...state.timeline, line(state, '뱀새끼 발언', '쇼미에 나갔으면서 뱀새끼라고 깎았다. 그 말이 캡처되기 쉽다.')],
       })
     case 'smtm-join': {
       let timeline = state.timeline
@@ -444,7 +483,7 @@ function reduce(state: GameState, action: Action): GameState {
       if (state.smtmTrashTalk && !state.snakeTag) {
         snake = true
         notice = '예전 말이 붙었다. 이제 닉 앞에 남는다.'
-        timeline = [...timeline, line(state, '과거 발언', '욕해 놓고 출연했다. 그 말이 닉 앞에 붙었다.')]
+        timeline = [...timeline, line(state, '뱀새끼', '뱀새끼라고 해 놓고 출연했다. 그 말이 닉 앞에 붙었다.')]
       }
       return openRound(
         {
@@ -461,7 +500,7 @@ function reduce(state: GameState, action: Action): GameState {
     case 'smtm-team': {
       const producer = PRODUCERS.find((item) => item.id === action.id) ?? PRODUCERS[0]
       const round = SMTM_ROUNDS[state.smtmRound]
-      const gig = Math.round(round.gig * state.buzz)
+      const gig = scalePay(state, round.gig)
       const earned = state.smtmEarned + gig
       const youtube = buildYoutube({
         roundIndex: state.smtmRound,
@@ -479,7 +518,7 @@ function reduce(state: GameState, action: Action): GameState {
         ripple: round.ripple,
         prize: 0,
       })
-      const clip = { ...youtube, producer: producer.name, producerLine: `${producer.team}. ${producer.meme}` }
+      const clip = { ...youtube, producer: producer.names.join(', '), producerLine: `${producer.team}. ${producer.meme}` }
       return {
         ...state,
         smtmTeam: producer.id,
@@ -500,9 +539,11 @@ function reduce(state: GameState, action: Action): GameState {
       return { ...state, screen: 'smtmStage', tab: 'now', draftTitle: SMTM_ROUNDS[state.smtmRound].name }
     case 'finish-smtm': {
       const round = SMTM_ROUNDS[state.smtmRound]
-      const judged = performScore(state, state.draftLyrics, 2, action.result)
+      const judged = action.skipped
+        ? skipPerform(state, state.draftLyrics, 2)
+        : performScore(state, state.draftLyrics, 2, action.result)
       let judgement = judged.score
-      if (round.kind === 'acapella') {
+      if (!action.skipped && round.kind === 'acapella') {
         judgement = action.result.micMissing
           ? judged.writing * 0.6 + judged.perform * 0.4
           : judged.writing * 0.55 + action.result.energy * 0.45
@@ -510,7 +551,7 @@ function reduce(state: GameState, action: Action): GameState {
       judgement -= state.snakeTag ? 4 : 0
       const rival = round.kind === 'diss' ? rivalPower(state.phase) : null
       const passed = roundPassed(state.smtmRound, judgement, rival ?? 0)
-      const gig = passed ? Math.round(round.gig * state.buzz) : 0
+      const gig = passed ? scalePay(state, round.gig) : 0
       const prize = passed ? round.prize : 0
       const earned = state.smtmEarned + gig + prize
       let reputation = state.reputation
@@ -661,20 +702,20 @@ function resolveEvent(state: GameState, choice: string): GameState {
       return {
         ...state,
         modal: null,
-        notice: '피처를 거절했다.',
-        timeline: [...state.timeline, line(state, '피처 거절', '요청을 무시했다.')],
+        notice: '피처링을 거절했다.',
+        timeline: [...state.timeline, line(state, '피처링 거절', '요청을 무시했다.')],
       }
     }
-    const power = (state.stats.lyric + state.stats.flow) / 2 + Math.random() * 25
+    const power = (state.stats.lyric + state.stats.club) / 2 + Math.random() * 25
     const ok = power > 42
-    const pay = ok ? Math.round(35_000 * (state.phase + 1) * (1 + state.stats.pr / 140) * state.buzz) : 0
+    const pay = ok ? scalePay(state, 180_000 * (1 + state.stats.pr / 90)) : 0
     return {
       ...state,
       modal: null,
       money: state.money + pay,
       reputation: capRep(state.reputation + (ok ? 3 : -1)),
-      notice: ok ? `피처가 라이브로 이어졌다. ${formatWon(pay)}을 받았다.` : '벌스가 묻혀서 이름이 깎였다.',
-      timeline: [...state.timeline, line(state, ok ? '피처' : '묻힌 피처', ok ? `라이브 제의로 ${formatWon(pay)}을 받았다.` : '실력이 피처를 받쳐 주지 못했다.')],
+      notice: ok ? `피처링이 라이브로 이어졌다. ${formatWon(pay)}을 받았다.` : '벌스가 묻혀서 이름이 깎였다.',
+      timeline: [...state.timeline, line(state, ok ? '피처링' : '묻힌 피처링', ok ? `라이브 제의로 ${formatWon(pay)}을 받았다.` : '실력이 피처링을 받쳐 주지 못했다.')],
     }
   }
   if (modal.kind === 'diss') {
@@ -684,13 +725,13 @@ function resolveEvent(state: GameState, choice: string): GameState {
         modal: null,
         reputation: capRep(state.reputation - 1),
         notice: '맞장을 피했다. 겁먹었다는 소문이 남았다.',
-        timeline: [...state.timeline, line(state, '맞장 회피', `${state.rivalName} 콜을 무시했다. 겁먹었다는 글이 올라왔다.`)],
+        timeline: [...state.timeline, line(state, '맞장 회피', `${state.rivalName}의 콜을 무시했다. 겁먹었다는 글이 올라왔다.`)],
       }
     }
-    const power = (state.stats.flow + state.stats.lyric) / 2 + Math.random() * 22
+    const power = (state.stats.lyric + state.stats.club) / 2 + Math.random() * 22
     const rival = 38 + state.phase * 6
     const win = power > rival
-    const pay = win ? Math.round(25_000 * (state.phase + 1) * state.buzz) : 0
+    const pay = win ? scalePay(state, 160_000) : 0
     return {
       ...state,
       modal: null,
