@@ -97,7 +97,7 @@ export function AlbumList({ state }: { state: GameState }) {
             <button className="track-meta" type="button" onClick={() => setOpen(expanded ? null : track.id)}>
               <b>{track.title}</b>
               <span>
-                {PHASES[track.phase]?.name} · {GENRE_LABEL[track.genre]} · 리드머 {track.rhythmMark.toFixed(1)}/5
+                {PHASES[track.phase]?.name} · {GENRE_LABEL[track.genre]} · 리드머 {track.rhythmMark.toFixed(1)}/5.0
                 {track.shift === 'boom' ? ' · 노선 호평' : track.shift === 'bust' ? ' · 노선 혹평' : ''}
               </span>
             </button>

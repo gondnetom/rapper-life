@@ -25,11 +25,16 @@ export function rivalPower(phase: number): number {
   return 48 + phase * 6 + Math.floor(Math.random() * 8)
 }
 
-export function roundPassed(roundIndex: number, judgement: number, rival: number): boolean {
+export function fameEase(reputation: number): number {
+  return Math.min(22, reputation / 4.2)
+}
+
+export function roundPassed(roundIndex: number, judgement: number, rival: number, reputation = 0): boolean {
   const round = SMTM_ROUNDS[roundIndex]
+  const ease = fameEase(reputation)
   if (round.kind === 'team') return true
-  if (round.kind === 'diss') return judgement > rival
-  return judgement >= round.bar
+  if (round.kind === 'diss') return judgement + ease * 0.35 > rival
+  return judgement + ease >= round.bar
 }
 
 export function smtmSeasonLabel(clears: number): string {
@@ -88,7 +93,7 @@ export function buildYoutube(opts: {
     judgement: opts.judgement,
     rivalScore: opts.rivalScore,
     rivalName: opts.rivalName,
-    producer: producerNames(producer),
+    producer: `${producer.team} · ${producerNames(producer)}`,
     producerLine: producer.meme,
     seasonEarned: opts.seasonEarned,
   }

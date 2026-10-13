@@ -91,7 +91,7 @@ export class BeatEngine {
       const ctx = new AudioContext()
       this.ctx = ctx
       const master = ctx.createGain()
-      master.gain.value = 0.55
+      master.gain.value = 0.9
       master.connect(ctx.destination)
       this.master = master
       const length = ctx.sampleRate
@@ -139,7 +139,7 @@ export class BeatEngine {
       this.file = null
     }
     this.fileMode = 'pending'
-    if (this.master) this.master.gain.value = 0.55
+    if (this.master) this.master.gain.value = 0.9
   }
 
   private async playFile() {

@@ -9,7 +9,11 @@ export const capRep = (n: number) => clamp(Math.round(n), 0, 100)
 export function rhythmMark(writingScore: number): number {
   const score = clamp(writingScore, 0, 100)
   const curved = score < 90 ? (score / 90) * 3.5 : 3.5 + ((score - 90) / 10) * 1.5
-  return clamp(Math.round(curved * 2) / 2, 0, 5)
+  return clamp(Math.round(curved * 2) / 2, 0, 4.5)
+}
+
+export function formatRhythm(mark: number): string {
+  return `리드머 ${mark.toFixed(1)}/5.0`
 }
 
 let seq = 0

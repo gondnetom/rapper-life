@@ -19,8 +19,9 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
               type="button"
               onClick={() => dispatch({ type: 'smtm-team', id: producer.id })}
             >
-              <b>{producer.team}</b>
-              <span>{producer.names.join(', ')}</span>
+              <b>
+                {producer.team} · {producer.names.join(', ')}
+              </b>
               <span>{producer.meme}</span>
             </button>
           ))}
@@ -38,7 +39,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
         <div className="youtube">
           <p className="kicker">{clip.passed ? 'PASS' : 'DROP'}</p>
           <h1 className="yt-title">
-            {state.snakeTag ? `[과거 발언] ` : ''}
+            {state.snakeTag ? `[뱀새끼] ` : ''}
             {state.rapName} {clip.roundName}
             {round.kind === 'diss' && clip.rivalName ? ` vs ${clip.rivalName}` : ''}
           </h1>
@@ -57,7 +58,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
               : round.kind === 'team'
                 ? ' · 팀 합류'
                 : ` · 기준 ${round.bar}`}
-            {state.snakeTag ? ' · 꼬리표 -4' : ''}
+            {state.snakeTag ? ' · 뱀새끼 -4' : ''}
           </p>
           {clip.comments.map((line) => (
             <p className="comment" key={line}>
@@ -92,7 +93,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
       <p className="lede">
         {state.smtmTrashTalk
           ? '예전에 쇼미를 뱀새끼라고 깎아 놨다. 지금 나가면 그 말이 닉 앞에 붙는다.'
-          : '파이널 상금은 10억이다. 라운드를 넘기면 파급이 붙고, 중간에 떨어지면 시즌이 끝난다. 망하면 여기서 시즌이 닫힌다.'}
+          : '파이널 상금은 10억이다. 라운드를 넘기면 파급이 붙고, 이름값이 높으면 다음 단계가 쉽다. 인맥 힙합이다.'}
       </p>
       <div className="stack">
         {SMTM_ROUNDS.map((round, index) => (

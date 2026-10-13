@@ -35,7 +35,7 @@ export function Reaction({ state, dispatch }: { state: GameState; dispatch: Disp
         </div>
       </div>
       <div className="critic">
-        <h2>리드머 {track.rhythmMark.toFixed(1)}/5</h2>
+        <h2>리드머 {track.rhythmMark.toFixed(1)}/5.0</h2>
         {track.rhythm.map((line) => (
           <p className="comment" key={line}>
             {line}
@@ -59,7 +59,7 @@ export function Reaction({ state, dispatch }: { state: GameState; dispatch: Disp
         {state.lastRepDelta} · 앨범 {formatWon(track.money)}
       </p>
       <button className="btn btn-wide" style={{ marginTop: 16 }} type="button" onClick={() => dispatch({ type: 'ack-reaction' })}>
-        {state.phase >= 1 ? '쇼미 나갈지 고민' : '다음으로'}
+        쇼미 나갈지 고민
       </button>
     </section>
   )

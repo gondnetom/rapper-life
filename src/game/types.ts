@@ -50,6 +50,11 @@ export interface Track {
   shift: 'boom' | 'bust' | null
 }
 
+export interface SmtmSeason {
+  phase: number
+  label: string
+}
+
 export interface TimelineItem {
   id: string
   phase: number
@@ -161,6 +166,7 @@ export interface GameState {
   lastPerformNote: string
   lastYoutube: YoutubeResult | null
   smtmLog: SmtmRoundRecord[]
+  smtmSeasons: SmtmSeason[]
   modal: ModalEvent | null
   notice: string | null
   noticeTick: number

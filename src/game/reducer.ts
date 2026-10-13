@@ -383,8 +383,7 @@ function reduce(state: GameState, action: Action): GameState {
       }
     }
     case 'ack-reaction':
-      if (state.phase >= 1) return { ...state, screen: 'smtmOffer', tab: 'now' }
-      return finishPhase(state)
+      return { ...state, screen: 'smtmOffer', tab: 'now' }
     case 'pick-label': {
       if (state.screen !== 'labelPick') return state
       if (!action.name) {
@@ -466,6 +465,7 @@ function reduce(state: GameState, action: Action): GameState {
     case 'smtm-skip':
       return finishPhase({
         ...state,
+        smtmSeasons: [...(state.smtmSeasons ?? []).filter((item) => item.phase !== state.phase), { phase: state.phase, label: '불참' }],
         notice: '쇼미에는 나가지 않았다. 꼬리표는 없다.',
         timeline: [...state.timeline, line(state, '쇼미 불참', '출연을 거절했다. 꼬리표는 없다.')],
       })
@@ -473,6 +473,7 @@ function reduce(state: GameState, action: Action): GameState {
       return finishPhase({
         ...state,
         smtmTrashTalk: true,
+        smtmSeasons: [...(state.smtmSeasons ?? []).filter((item) => item.phase !== state.phase), { phase: state.phase, label: '뱀새끼 발언' }],
         notice: trashReactions(state.rapName),
         timeline: [...state.timeline, line(state, '뱀새끼 발언', '쇼미에 나갔으면서 뱀새끼라고 깎았다. 그 말이 캡처되기 쉽다.')],
       })
@@ -518,7 +519,7 @@ function reduce(state: GameState, action: Action): GameState {
         ripple: round.ripple,
         prize: 0,
       })
-      const clip = { ...youtube, producer: producer.names.join(', '), producerLine: `${producer.team}. ${producer.meme}` }
+      const clip = { ...youtube, producer: `${producer.team} · ${producer.names.join(', ')}`, producerLine: producer.meme }
       return {
         ...state,
         smtmTeam: producer.id,
@@ -550,7 +551,7 @@ function reduce(state: GameState, action: Action): GameState {
       }
       judgement -= state.snakeTag ? 4 : 0
       const rival = round.kind === 'diss' ? rivalPower(state.phase) : null
-      const passed = roundPassed(state.smtmRound, judgement, rival ?? 0)
+      const passed = roundPassed(state.smtmRound, judgement, rival ?? 0, state.reputation)
       const gig = passed ? scalePay(state, round.gig) : 0
       const prize = passed ? round.prize : 0
       const earned = state.smtmEarned + gig + prize
@@ -611,7 +612,10 @@ function reduce(state: GameState, action: Action): GameState {
         ...state,
         smtmBestClears: Math.max(state.smtmBestClears, clears),
         smtmWins: state.smtmWins + (won ? 1 : 0),
-        notice: won ? `파이널에서 우승했다. ${prizeText}${rippleText}. 다음 곡 정산이 커진다.` : `${label}이다. ${rippleText}.`,
+        smtmSeasons: [...(state.smtmSeasons ?? []).filter((item) => item.phase !== state.phase), { phase: state.phase, label }],
+        notice: won
+          ? `파이널에서 우승했다. ${prizeText}${rippleText}. 이름값이 다음 라운드를 밀어 준다.`
+          : `${label}이다. ${rippleText}. 인맥 힙합이라 이름값이 높으면 다음이 쉽다.`,
         timeline: [
           ...state.timeline,
           line(
@@ -714,8 +718,17 @@ function resolveEvent(state: GameState, choice: string): GameState {
       modal: null,
       money: state.money + pay,
       reputation: capRep(state.reputation + (ok ? 3 : -1)),
-      notice: ok ? `피처링이 라이브로 이어졌다. ${formatWon(pay)}을 받았다.` : '벌스가 묻혀서 이름이 깎였다.',
-      timeline: [...state.timeline, line(state, ok ? '피처링' : '묻힌 피처링', ok ? `라이브 제의로 ${formatWon(pay)}을 받았다.` : '실력이 피처링을 받쳐 주지 못했다.')],
+      notice: ok
+        ? `${state.rivalName} 피처링이 라이브로 이어졌다. ${formatWon(pay)}을 받았다.`
+        : `${state.rivalName} 피처링에서 벌스가 묻혀서 이름이 깎였다.`,
+      timeline: [
+        ...state.timeline,
+        line(
+          state,
+          ok ? `${state.rivalName} 피처링` : `${state.rivalName} 묻힌 피처링`,
+          ok ? `라이브 제의로 ${formatWon(pay)}을 받았다.` : '실력이 피처링을 받쳐 주지 못했다.',
+        ),
+      ],
     }
   }
   if (modal.kind === 'diss') {

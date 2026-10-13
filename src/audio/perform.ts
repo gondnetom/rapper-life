@@ -107,7 +107,7 @@ export function startRecording(opts: {
         recorder.ondataavailable = (event) => {
           if (event.data.size) chunks.push(event.data)
         }
-        recorder.start()
+        recorder.start(250)
       } catch {
         recorder = null
       }

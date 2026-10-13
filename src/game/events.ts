@@ -34,7 +34,7 @@ function featureEvent(state: GameState): ModalEvent {
   return {
     id: uid(),
     kind: 'feature',
-    title: '피처링 요청',
+    title: `${host.name} 피처링`,
     body: `${iga(host.name)} ${state.rapName}에게 피처링을 요청했다. 받으면 라이브 제의가 오고, 벌스가 약하면 묻힌다.`,
     rep: 0,
     money: 0,

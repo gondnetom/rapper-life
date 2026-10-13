@@ -1,5 +1,5 @@
 import { RIVALS } from './content'
-import type { GameState, SmtmRoundRecord, Stats } from './types'
+import type { GameState, SmtmRoundRecord, SmtmSeason, Stats } from './types'
 
 const KEY = 'rapper-life-v2'
 
@@ -47,6 +47,7 @@ export function freshState(): GameState {
     lastPerformNote: '',
     lastYoutube: null,
     smtmLog: [],
+    smtmSeasons: [],
     modal: null,
     notice: null,
     noticeTick: 0,
@@ -90,6 +91,9 @@ export function loadGame(): GameState | null {
       smtmTeam: data.smtmTeam ?? null,
       smtmOpponent: data.smtmOpponent ?? null,
       smtmLog: readSmtmLog(data.smtmLog),
+      smtmSeasons: Array.isArray(data.smtmSeasons)
+        ? data.smtmSeasons.filter((item): item is SmtmSeason => Boolean(item && typeof item.phase === 'number' && typeof item.label === 'string'))
+        : [],
       beatId: data.beatId ?? null,
       usedBeats: Array.isArray(data.usedBeats) ? data.usedBeats : [],
       draftCoverId: typeof data.draftCoverId === 'string' ? data.draftCoverId : null,

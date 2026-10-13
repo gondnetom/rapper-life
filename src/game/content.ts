@@ -59,19 +59,39 @@ export const DISS_OPPONENTS = [
 export const RIVALS = DISS_OPPONENTS.map((item) => item.name)
 
 export const LABELS = [
-  { name: '일리네르', line: '일리네르가 계약서를 들고 왔다. 사인하면 앨범 정산이 오르고, 거절하면 인디로 고정된다.' },
-  { name: '저스트튠', line: '저스트튠이 연습실로 찾아왔다. 받으면 라이브 자리가 생기고, 거절하면 인디로 남는다.' },
-  { name: '하이리트', line: '하이리트가 데모에 반응했다. 계약하면 파급이 생기고, 거절하면 하던 장르를 유지한다.' },
+  { name: 'ILLIONAIRE RECORDS', min: 36, base: 2_400_000, line: '일리네어가 계약서를 들고 왔다. 선급이 크고, 앨범 정산이 따라온다.' },
+  { name: 'AOMG', min: 32, base: 2_100_000, line: 'AOMG가 데모를 들었다. 사인하면 라이브 자리가 먼저 붙는다.' },
+  { name: 'H1GHR MUSIC', min: 28, base: 1_700_000, line: '하이어뮤직이 반응했다. 계약하면 파급이 붙고, 거절하면 인디로 남는다.' },
+  { name: 'Just Music', min: 24, base: 1_350_000, line: '저스트뮤직이 연습실로 찾아왔다. 받으면 무대가 생기고, 거절하면 하던 노선을 유지한다.' },
+  { name: 'Hi-Lite Records', min: 20, base: 980_000, line: '하이라이트레코드가 데모에 반응했다. 선급은 중간이다.' },
+  { name: 'Ambition Musik', min: 18, base: 860_000, line: '앰비션 뮤직이 연락했다. 사인하면 앨범 정산이 오른다.' },
+  { name: 'STANDARD FRIENDS', min: 16, base: 720_000, line: '스탠다드프렌즈가 데모를 들었다. 라이브 자리가 생긴다.' },
+  { name: 'WYBH', min: 14, base: 580_000, line: 'WYBH가 찾아왔다. 계약하면 파급이 붙는다.' },
+  { name: 'Indigo Music', min: 12, base: 480_000, line: '인디고 뮤직이 데모에 반응했다. 선급은 작고, 자리는 생긴다.' },
+  { name: 'VMC', min: 10, base: 390_000, line: 'VMC가 계약서를 들고 왔다. 언더에서 먼저 밀어 준다.' },
+  { name: 'Feel Ghood Music', min: 8, base: 320_000, line: '필굿뮤직이 반응했다. 아직 이름이 작은 사람을 밀어 준다.' },
+  { name: 'Brand New Music', min: 22, base: 1_100_000, line: '브랜드뉴뮤직이 데모를 들었다. 사인하면 방송 자리가 생긴다.' },
 ]
 
-export function labelOffers(rep: number): { name: string; line: string; advance: number }[] {
-  const table = [
-    { name: '일리네르', min: 30, base: 1_800_000, line: '제일 무거운 계약이다. 선급이 크고, 앨범 정산이 따라온다.' },
-    { name: '저스트튠', min: 18, base: 900_000, line: '라이브 자리가 먼저 붙는다. 선급은 중간이다.' },
-    { name: '하이리트', min: 8, base: 320_000, line: '아직 이름이 작은 사람을 밀어 준다. 선급은 작고, 자리는 생긴다.' },
-  ]
-  return table
-    .filter((item) => rep >= item.min)
+function shuffleBy(seed: number, items: typeof LABELS) {
+  const copy = [...items]
+  let n = seed || 1
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    n = (n * 9301 + 49297) % 233280
+    const j = n % (i + 1)
+    const temp = copy[i]
+    copy[i] = copy[j]
+    copy[j] = temp
+  }
+  return copy
+}
+
+export function labelOffers(rep: number, seed = rep): { name: string; line: string; advance: number }[] {
+  const eligible = LABELS.filter((item) => rep >= item.min)
+  const count = Math.min(eligible.length, eligible.length <= 2 ? eligible.length : 3)
+  return shuffleBy(seed + eligible.length, eligible)
+    .slice(0, count)
+    .sort((a, b) => b.min - a.min)
     .map((item) => ({ name: item.name, line: item.line, advance: item.base + rep * 18_000 }))
 }
 

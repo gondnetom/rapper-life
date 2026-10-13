@@ -91,7 +91,7 @@ export async function paintAlbumCard(opts: {
   ctx.fillText('/100', 72 + scoreWidth + 16, y + 72)
   ctx.fillStyle = color
   ctx.font = '800 32px Pretendard, Malgun Gothic, sans-serif'
-  const rhythm = `리드머 ${opts.rhythmMark.toFixed(1)}/5`
+  const rhythm = `리드머 ${opts.rhythmMark.toFixed(1)}/5.0`
   ctx.fillText(rhythm, 1008 - ctx.measureText(rhythm).width, y + 72)
 
   ctx.fillStyle = '#9a9a9a'

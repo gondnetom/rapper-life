@@ -41,11 +41,11 @@ export function Stage({
       dispatch({ type: 'finish-smtm', result })
       return
     }
-    const audioId = result.blob ? uid() : null
+    const audioId = result.blob && result.blob.size > 0 ? uid() : null
     if (audioId && result.blob) {
-      void saveTake(audioId, result.blob).finally(() => {
-        dispatch({ type: 'finish-release', result, audioId })
-      })
+      void saveTake(audioId, result.blob)
+        .then(() => dispatch({ type: 'finish-release', result, audioId }))
+        .catch(() => dispatch({ type: 'finish-release', result, audioId: null }))
       return
     }
     dispatch({ type: 'finish-release', result, audioId: null })
