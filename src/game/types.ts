@@ -145,6 +145,7 @@ export interface GameState {
   shiftUsed: boolean
   pendingShift: PendingShift | null
   smtmTrashTalk: boolean
+  smtmAppeared: boolean
   snakeTag: boolean
   tonicEnd: boolean
   smtmBestClears: number

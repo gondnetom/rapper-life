@@ -10,7 +10,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
       <section>
         <p className="kicker">TEAM</p>
         <h1 className="screen-title">팀 선택</h1>
-        <p className="lede">네 팀 중 하나를 고른다. 각 팀에 프로듀서가 두 명이다. 고르면 그 뒤로 파급이 붙는다.</p>
+        <p className="lede">네 팀 중 하나를 고른다. 팀 이름은 프로듀서 이름 앞글자를 붙인 것이다. 고르면 그 뒤로 파급이 붙는다.</p>
         <div className="stack">
           {PRODUCERS.map((producer) => (
             <button
@@ -39,7 +39,6 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
         <div className="youtube">
           <p className="kicker">{clip.passed ? 'PASS' : 'DROP'}</p>
           <h1 className="yt-title">
-            {state.snakeTag ? `[뱀새끼] ` : ''}
             {state.rapName} {clip.roundName}
             {round.kind === 'diss' && clip.rivalName ? ` vs ${clip.rivalName}` : ''}
           </h1>
@@ -92,8 +91,10 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
       <h1 className="screen-title">쇼미더머니</h1>
       <p className="lede">
         {state.smtmTrashTalk
-          ? '예전에 쇼미를 뱀새끼라고 깎아 놨다. 지금 나가면 그 말이 닉 앞에 붙는다.'
-          : '파이널 상금은 10억이다. 라운드를 넘기면 파급이 붙고, 이름값이 높으면 다음 단계가 쉽다. 인맥 힙합이다.'}
+          ? '예전에 쇼미 나가면 구리다고 욕해 놨다. 지금 나가면 그 표시가 레이블 옆에 붙는다.'
+          : state.smtmAppeared
+            ? '예전에 쇼미에 나갔다. 지금 구리다고 욕하면 뱀새끼가 레이블 옆에 붙는다. 순서는 상관없다.'
+            : '파이널 상금은 10억이다. 라운드를 넘기면 파급이 붙고, 이름값이 높으면 다음 단계가 쉽다. 인맥 힙합이다.'}
       </p>
       <div className="stack">
         {SMTM_ROUNDS.map((round, index) => (
@@ -116,7 +117,7 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
         </button>
         {!state.smtmTrashTalk && (
           <button className="btn-ghost btn-wide" type="button" onClick={() => dispatch({ type: 'smtm-trash' })}>
-            쇼미를 뱀새끼라고 말한다
+            쇼미 나가면 구리다고 욕한다
           </button>
         )}
       </div>

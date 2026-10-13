@@ -56,10 +56,7 @@ export function Shell({
           <div className="top-row">
             <div>
               <p className="kicker">{state.screen === 'retire' ? '은퇴' : PHASES[state.phase]?.name}</p>
-              <h1 className="rap-name">
-                {state.snakeTag ? <span className="snake-mark">뱀새끼</span> : null}
-                {state.rapName}
-              </h1>
+              <h1 className="rap-name">{state.rapName}</h1>
             </div>
           </div>
           <p className="top-meta">
@@ -68,7 +65,7 @@ export function Shell({
           </p>
           <div className="badges">
             {state.signedLabel && <span className="badge">{state.labelName ?? '레이블'}</span>}
-            {state.snakeTag && <span className="badge warn">뱀새끼</span>}
+            {state.snakeTag && <span className="snake-mark">뱀새끼</span>}
             {state.pendingShift && <span className="badge">노선 변경 대기</span>}
           </div>
         </header>

@@ -60,10 +60,11 @@ function showMeLine(state: GameState): string {
   return `쇼미는 ${euro(smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk))} 끝났다.`
 }
 
-function smtmSeasonLines(state: GameState): string[] {
-  return PHASES.map((phase, index) => {
+function smtmSeasonCards(state: GameState): { name: string; label: string }[] {
+  return PHASES.flatMap((phase, index) => {
     const row = (state.smtmSeasons ?? []).find((item) => item.phase === index)
-    return `${phase.name} 쇼미 ${row?.label ?? '기록 없음'}`
+    if (!row?.label) return []
+    return [{ name: phase.name, label: row.label }]
   })
 }
 
@@ -88,7 +89,7 @@ function biography(state: GameState): string[] {
   lines.push(
     `${showMeLine(state)} 통장에는 ${formatWon(state.money)}이 있고, 이름값은 ${formatRep(state.reputation)}이다. 제일 잘한 건 ${statLabel(topStat(state.stats))}이다.`,
   )
-  if (state.snakeTag) lines.push('예전에 한 말이 닉 앞에 남았다. 뱀새끼다.')
+  if (state.snakeTag) lines.push('쇼미 출연과 그 욕이 같이 남아서, 레이블 옆에 뱀새끼가 붙었다.')
   return lines
 }
 
@@ -97,7 +98,7 @@ function paint(state: GameState) {
   const origin = ORIGINS.find((item) => item.id === state.originId)
   const history = careerGroups(state)
   const styles = phaseStyles(state)
-  const footerReserve = 132
+  const footerReserve = 72
   const scratch = document.createElement('canvas')
   scratch.width = 1080
   scratch.height = 7200
@@ -124,10 +125,10 @@ function paint(state: GameState) {
     state.genre ? GENRE_LABEL[state.genre] : '',
     origin?.place ?? '',
     state.ownLabel ? '사장' : state.signedLabel ? (state.labelName ?? '레이블') : '인디',
+    state.snakeTag ? '뱀새끼' : '',
     `잔고 ${formatWon(state.money)}`,
     `이름값 ${formatRep(state.reputation)}`,
     smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk),
-    state.snakeTag ? '뱀새끼' : '',
   ].filter(Boolean)
   ctx.fillStyle = '#ffffff'
   ctx.font = '700 28px Pretendard, Malgun Gothic, sans-serif'
@@ -186,14 +187,26 @@ function paint(state: GameState) {
     y += 166
   })
 
-  ctx.fillStyle = color
-  ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
-  ctx.fillText('쇼미', 72, y + 28)
-  y += 52
-  ctx.fillStyle = '#d7d7d7'
-  ctx.font = '400 30px Pretendard, Malgun Gothic, sans-serif'
-  for (const line of smtmSeasonLines(state)) y = wrap(ctx, line, 72, y, 936, 44)
-  y += 8
+  const seasons = smtmSeasonCards(state)
+  if (seasons.length) {
+    ctx.fillStyle = color
+    ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
+    ctx.fillText('쇼미', 72, y + 28)
+    y += 52
+    for (const row of seasons) {
+      ctx.fillStyle = '#1b1b1b'
+      ctx.fillRect(72, y, 936, 108)
+      ctx.fillStyle = color
+      ctx.fillRect(72, y, 10, 108)
+      ctx.font = '800 24px Pretendard, Malgun Gothic, sans-serif'
+      ctx.fillText(row.name, 104, y + 40)
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '700 32px Pretendard, Malgun Gothic, sans-serif'
+      ctx.fillText(row.label, 104, y + 80)
+      y += 122
+    }
+    y += 8
+  }
 
   const fights = history.flatMap((group) => group.items.filter((item) => isFightTitle(item.title)))
   const features = history.flatMap((group) => group.items.filter((item) => isFeatureTitle(item.title)))
@@ -260,9 +273,6 @@ function paint(state: GameState) {
   out.fillRect(0, 0, 1080, height)
   const drawn = Math.min(y, scratch.height)
   out.drawImage(scratch, 0, 0, 1080, drawn, 0, 0, 1080, drawn)
-  out.fillStyle = '#666'
-  out.font = '400 24px Pretendard, Malgun Gothic, sans-serif'
-  out.fillText('신입부터 황혼기까지', 72, height - 40)
   return canvas
 }
 
@@ -364,15 +374,13 @@ export function ShareCard({ state }: { state: GameState }) {
   }
 
   const color = state.genre ? GENRE_COLOR[state.genre] : '#1db954'
-  const chips = [
-    state.genre ? GENRE_LABEL[state.genre] : '',
-    origin?.place ?? '',
-    state.ownLabel ? '사장' : state.signedLabel ? (state.labelName ?? '레이블') : '인디',
+  const labelText = state.ownLabel ? '사장' : state.signedLabel ? (state.labelName ?? '레이블') : '인디'
+  const chipHead = [state.genre ? GENRE_LABEL[state.genre] : '', origin?.place ?? '', labelText].filter(Boolean).join('  ·  ')
+  const chipTail = [
     `잔고 ${formatWon(state.money)}`,
     `이름값 ${formatRep(state.reputation)}`,
     smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk),
-    state.snakeTag ? '뱀새끼' : '',
-  ].filter(Boolean)
+  ].filter(Boolean).join('  ·  ')
 
   return (
     <section>
@@ -387,7 +395,11 @@ export function ShareCard({ state }: { state: GameState }) {
             {career.title}
           </div>
           <p className="blurb">{career.blurb}</p>
-          <p className="chip-line">{chips.join('  ·  ')}</p>
+          <p className="chip-line">
+            {chipHead}
+            {state.snakeTag ? <span className="snake-mark">뱀새끼</span> : null}
+            {chipTail ? `  ·  ${chipTail}` : ''}
+          </p>
           <h3 style={{ color }}>커리어</h3>
           {bio.map((line) => (
             <p className="bio-line" key={line}>
@@ -413,12 +425,19 @@ export function ShareCard({ state }: { state: GameState }) {
               <em>“{signatureLine(track.lyrics)}”</em>
             </div>
           ))}
-          <h3 style={{ color }}>쇼미</h3>
-          {smtmSeasonLines(state).map((line) => (
-            <p className="bio-line" key={line}>
-              {line}
-            </p>
-          ))}
+          {smtmSeasonCards(state).length > 0 && (
+            <>
+              <h3 style={{ color }}>쇼미</h3>
+              <div className="smtm-cards">
+                {smtmSeasonCards(state).map((row) => (
+                  <div className="smtm-card" key={row.name} style={{ borderLeftColor: color }}>
+                    <b>{row.name}</b>
+                    <span>{row.label}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           {history.flatMap((group) => group.items.filter((item) => isFightTitle(item.title))).length > 0 && (
             <>
               <h3 style={{ color }}>맞장 · 디스</h3>
@@ -452,7 +471,6 @@ export function ShareCard({ state }: { state: GameState }) {
               </div>
             )
           })}
-          <p className="card-foot">신입부터 황혼기까지</p>
         </div>
       </article>
       <button className="btn btn-wide" style={{ marginTop: 12 }} type="button" onClick={() => void save()}>

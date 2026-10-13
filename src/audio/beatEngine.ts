@@ -1,4 +1,5 @@
 import { beatById, type BeatTrack } from './beats'
+import { claimPlayback } from './session'
 import type { Genre } from '../game/types'
 
 interface Pattern {
@@ -73,6 +74,8 @@ export class BeatEngine {
   private playing = false
   private file: HTMLAudioElement | null = null
   private fileMode: 'pending' | 'file' | 'synth' = 'pending'
+  private fileToken = 0
+  private synthLive = false
   private spec: BeatTrack | null = null
 
   setBeat(spec: BeatTrack) {
@@ -87,12 +90,12 @@ export class BeatEngine {
   }
 
   ensure(): AudioContext {
+    claimPlayback()
     if (!this.ctx) {
       const ctx = new AudioContext()
       this.ctx = ctx
       const master = ctx.createGain()
       master.gain.value = 0.9
-      master.connect(ctx.destination)
       this.master = master
       const length = ctx.sampleRate
       const buffer = ctx.createBuffer(1, length, ctx.sampleRate)
@@ -115,23 +118,40 @@ export class BeatEngine {
   }
 
   start() {
-    const ctx = this.ensure()
-    if (this.playing) return
+    claimPlayback()
+    this.markSession('playing')
+    const fresh = !this.playing
     this.playing = true
-    this.fileMode = 'pending'
-    this.nextTime = ctx.currentTime + 0.06
-    this.step = 0
-    void this.playFile()
-    this.pump()
+    if (fresh) {
+      this.nextTime = performance.now() / 1000 + 0.06
+      this.step = 0
+      this.pump()
+    }
+    const live = this.fileMode === 'file' && this.file && !this.file.paused
+    if (!live) void this.playFile()
   }
 
   stop() {
     this.playing = false
     window.clearTimeout(this.timer)
     this.stopFile()
+    this.markSession('paused')
+  }
+
+  private markSession(state: 'playing' | 'paused') {
+    if (!('mediaSession' in navigator)) return
+    try {
+      if (state === 'playing' && !navigator.mediaSession.metadata) {
+        navigator.mediaSession.metadata = new MediaMetadata({ title: '비트', artist: '한국 래퍼의 삶' })
+      }
+      navigator.mediaSession.playbackState = state
+    } catch {
+      /* metadata is optional */
+    }
   }
 
   private stopFile() {
+    this.fileToken += 1
     if (this.file) {
       this.file.pause()
       this.file.src = ''
@@ -139,39 +159,75 @@ export class BeatEngine {
       this.file = null
     }
     this.fileMode = 'pending'
-    if (this.master) this.master.gain.value = 0.9
+  }
+
+  private ctxTime(when: number) {
+    const ctx = this.ctx
+    if (!ctx) return when
+    return ctx.currentTime + (when - performance.now() / 1000)
+  }
+
+  private armSynth() {
+    const ctx = this.ensure()
+    if (this.master && !this.synthLive) {
+      this.master.connect(ctx.destination)
+      this.synthLive = true
+    }
+  }
+
+  private fallbackSynth(audio: HTMLAudioElement) {
+    if (this.file !== audio) return
+    audio.pause()
+    audio.remove()
+    this.file = null
+    if (!this.playing) return
+    this.fileMode = 'synth'
+    this.armSynth()
+  }
+
+  private blocked(error: unknown) {
+    return error instanceof DOMException && (error.name === 'NotAllowedError' || error.name === 'AbortError')
   }
 
   private async playFile() {
+    const token = ++this.fileToken
     const spec = this.spec ?? beatById(null, this.genre)
     const audio = new Audio()
     audio.loop = false
     audio.preload = 'auto'
     audio.setAttribute('playsinline', 'true')
-    audio.volume = 0.9
+    audio.setAttribute('webkit-playsinline', 'true')
     audio.src = spec.src
-    audio.style.display = 'none'
+    audio.style.position = 'fixed'
+    audio.style.width = '0'
+    audio.style.height = '0'
+    audio.style.opacity = '0'
+    audio.style.pointerEvents = 'none'
     document.body.appendChild(audio)
+    if (this.file) {
+      this.file.pause()
+      this.file.src = ''
+      this.file.remove()
+    }
     this.file = audio
+    this.fileMode = 'pending'
     audio.ontimeupdate = () => {
       const cap = audio.duration && audio.duration < 70 ? Math.max(0.2, audio.duration - 0.08) : 58
       if (audio.currentTime >= cap) audio.currentTime = 0
     }
-    const fail = () => {
-      if (this.file !== audio) return
-      audio.pause()
-      audio.remove()
-      this.file = null
-      if (this.playing) this.fileMode = 'synth'
+    audio.onerror = () => {
+      if (token !== this.fileToken) return
+      this.fallbackSynth(audio)
     }
-    audio.onerror = fail
     try {
       await audio.play()
-    } catch {
-      fail()
+    } catch (error) {
+      if (token !== this.fileToken) return
+      if (this.blocked(error)) return
+      this.fallbackSynth(audio)
       return
     }
-    if (!this.playing || this.file !== audio) {
+    if (token !== this.fileToken || !this.playing || this.file !== audio) {
       audio.pause()
       audio.remove()
       if (this.file === audio) this.file = null
@@ -181,15 +237,16 @@ export class BeatEngine {
   }
 
   private pump = () => {
-    if (!this.playing || !this.ctx) return
+    if (!this.playing) return
+    const now = performance.now() / 1000
     const pattern = PATTERNS[this.genre]
     const stepDur = 60 / (this.spec?.bpm ?? pattern.bpm) / 4
-    if (this.nextTime < this.ctx.currentTime) this.nextTime = this.ctx.currentTime + 0.02
-    while (this.nextTime < this.ctx.currentTime + 0.14) {
+    if (this.nextTime < now) this.nextTime = now + 0.02
+    while (this.nextTime < now + 0.14) {
       const step16 = this.step % 16
       const swing = step16 % 2 === 1 ? pattern.swing : 0
       const time = this.nextTime + swing
-      if (this.fileMode === 'synth') this.playStep(time, step16, pattern)
+      if (this.fileMode === 'synth') this.playStep(this.ctxTime(time), step16, pattern)
       if (pattern.kick.includes(step16) || pattern.snare.includes(step16)) {
         this.accents.push(time)
         if (this.accents.length > 480) this.accents.splice(0, 240)

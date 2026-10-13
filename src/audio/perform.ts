@@ -1,3 +1,4 @@
+import { claimPlayback } from './session'
 import { clamp } from '../game/format'
 import type { PerformResult } from '../game/types'
 
@@ -91,6 +92,7 @@ export function startRecording(opts: {
         return
       }
 
+      claimPlayback()
       const ctx = opts.audioContext
       if (ctx.state === 'suspended') await ctx.resume()
       const source = ctx.createMediaStreamSource(stream)
@@ -113,7 +115,7 @@ export function startRecording(opts: {
       }
 
       const startedAt = performance.now()
-      const startAudio = ctx.currentTime
+      const startAudio = startedAt / 1000
       const peaks: number[] = []
       const levels: number[] = []
       let hot = false
@@ -163,7 +165,7 @@ export function startRecording(opts: {
         }
         const rms = Math.sqrt(sum / samples.length)
         levels.push(rms)
-        const now = ctx.currentTime
+        const now = performance.now() / 1000
         if (rms > 0.08 && !hot && now - lastPeak > 0.08) {
           peaks.push(now)
           lastPeak = now
@@ -184,7 +186,7 @@ export function startRecording(opts: {
         } catch {
           /* already stopped */
         }
-        const endAudio = ctx.currentTime
+        const endAudio = performance.now() / 1000
         const accents = opts.getAccents().filter((time) => time >= startAudio && time <= endAudio)
         const windowSec = Math.min(0.18, 0.07 + opts.flow * 0.0011)
         let hits = 0

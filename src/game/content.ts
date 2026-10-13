@@ -95,11 +95,15 @@ export function labelOffers(rep: number, seed = rep): { name: string; line: stri
     .map((item) => ({ name: item.name, line: item.line, advance: item.base + rep * 18_000 }))
 }
 
+function withTeam<T extends { names: string[] }>(row: T) {
+  return { ...row, team: `팀 ${row.names.map((name) => [...name][0] ?? '').join('')}` }
+}
+
 export const PRODUCERS = [
-  { id: 'doki', names: ['도끼', '더콰이엇'], team: '팀 도끼', meme: '음원 얘기는 나중에 해. 지금은 실력부터 본다.' },
-  { id: 'swingz', names: ['스윙스', '기리보이'], team: '팀 스윙스', meme: '마이크를 놓치면 탈락이다. 각오 없으면 나가라.' },
-  { id: 'grayson', names: ['그레이', '자이언티'], team: '팀 그레이', meme: '멜로디만 있고 래퍼가 안 보인다. 벌스로 인정받아라.' },
-  { id: 'codeart', names: ['코드쿤스트', '팔로알토'], team: '팀 코드쿤스트', meme: '비트가 세면 네가 밀린다. 오늘은 네가 비트를 밀어라.' },
+  withTeam({ id: 'doki', names: ['도끼', '더콰이엇'], meme: '음원 얘기는 나중에 해. 지금은 실력부터 본다.' }),
+  withTeam({ id: 'swingz', names: ['스윙스', '기리보이'], meme: '마이크를 놓치면 탈락이다. 각오 없으면 나가라.' }),
+  withTeam({ id: 'grayson', names: ['그레이', '자이언티'], meme: '멜로디만 있고 래퍼가 안 보인다. 벌스로 인정받아라.' }),
+  withTeam({ id: 'codeart', names: ['코드쿤스트', '팔로알토'], meme: '비트가 세면 네가 밀린다. 오늘은 네가 비트를 밀어라.' }),
 ]
 
 export function producerNames(producer: { names: string[] }): string {
@@ -347,12 +351,18 @@ export function rhythmLines(score: number, shift: 'boom' | 'bust' | null): strin
   return picked
 }
 
-export function trashReactions(name: string): string {
-  const lines = [
-    `${eun(name)} 쇼미에 나갔으면서 뱀새끼라고 깐다. 그 말이 저장될 것 같다.`,
-    '나갔던 사람이 뱀새끼라고 하니 캡처가 돈다.',
-    '쇼미를 뱀새끼라고 한 말이 이름보다 먼저 돈다.',
-  ]
+export function trashReactions(name: string, appeared: boolean): string {
+  const lines = appeared
+    ? [
+        `${eun(name)} 쇼미에 나갔다가, 나가면 구리다고 욕한다. 그 표시가 레이블 옆에 붙었다.`,
+        '나갔던 사람이 쇼미는 구리다고 하니 레이블 옆에 남는다.',
+        '쇼미 나가면 구리다는 말이 이름보다 먼저 돈다.',
+      ]
+    : [
+        `${eun(name)} 쇼미 나가면 구리다고 욕했다. 나중에 나가면 그 표시가 레이블 옆에 붙는다.`,
+        '쇼미는 구리다고 욕부터 했다. 출연하는 순간 뱀새끼가 된다.',
+        '쇼미 나가면 구리다는 말이 저장됐다. 나가면 레이블 옆에 남는다.',
+      ]
   return lines[Math.floor(Math.random() * lines.length)]
 }
 
@@ -379,7 +389,7 @@ export function youtubeComments(name: string, passed: boolean, snake: boolean, r
 export const SNAKE_EVENTS = [
   {
     title: '과거 발언 캡처',
-    body: '쇼미를 뱀새끼라고 했던 문장이 다시 돌고, 해명 댓글은 묻힌다.',
+    body: '쇼미 나가면 구리다고 했던 문장이 다시 돌고, 해명 댓글은 묻힌다.',
     rep: -3,
     money: 0,
   },

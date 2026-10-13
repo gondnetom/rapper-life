@@ -52,7 +52,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   letter-spacing: 0;
 }
 .top-meta { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
-.badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
 .badge {
   border-radius: 999px;
   padding: 3px 8px;
@@ -532,9 +532,22 @@ h1, h2, p { margin: 0; }
 .poster-body { padding: 16px 16px 28px; }
 .share-card .mark { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; }
 .share-card h2 { font-size: 40px; letter-spacing: -0.05em; line-height: 1.05; margin: 8px 0 4px; }
+.smtm-cards { display: flex; flex-direction: column; gap: 8px; }
+.smtm-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #1b1b1b;
+  border-left: 4px solid var(--green);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.smtm-card b { color: var(--muted); font-size: 12px; letter-spacing: 0.04em; }
+.smtm-card span { font-size: 16px; font-weight: 800; }
 .share-card .arch { font-size: 18px; font-weight: 800; }
 .share-card .blurb { color: #d0d0d0; line-height: 1.45; margin: 8px 0; }
 .chip-line { color: #fff; font-weight: 700; font-size: 13px; line-height: 1.5; margin: 0 0 14px; }
+.chip-line .snake-mark { margin: 0 6px; vertical-align: middle; }
 .share-card h3 { font-size: 15px; margin: 16px 0 8px; }
 .bio-line { color: #d7d7d7; font-size: 13px; line-height: 1.45; margin: 0 0 6px; }
 .style-line {
@@ -567,7 +580,5 @@ h1, h2, p { margin: 0; }
 .line-row strong { display: block; }
 .line-row span { display: block; color: #9a9a9a; font-size: 12px; margin-top: 4px; }
 .line-row em { display: block; font-style: normal; margin-top: 6px; }
-.card-foot { margin-top: 36px; color: #666; font-size: 12px; }
-
 .section { margin-top: 22px; }
 .section h2 { font-size: 20px; letter-spacing: -0.04em; margin-bottom: 8px; }

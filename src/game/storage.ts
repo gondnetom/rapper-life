@@ -26,6 +26,7 @@ export function freshState(): GameState {
     shiftUsed: false,
     pendingShift: null,
     smtmTrashTalk: false,
+    smtmAppeared: false,
     snakeTag: false,
     tonicEnd: false,
     smtmBestClears: -1,
@@ -70,6 +71,16 @@ function readSmtmLog(value: unknown): SmtmRoundRecord[] {
   return rows
 }
 
+function hadSmtmAppearance(data: Partial<GameState>): boolean {
+  if (data.smtmAppeared) return true
+  if (Array.isArray(data.smtmLog) && data.smtmLog.length > 0) return true
+  if (typeof data.smtmBestClears === 'number' && data.smtmBestClears >= 0) return true
+  if (typeof data.smtmWins === 'number' && data.smtmWins > 0) return true
+  if (typeof data.smtmTeam === 'string' && data.smtmTeam) return true
+  const seasons = Array.isArray(data.smtmSeasons) ? data.smtmSeasons : []
+  return seasons.some((item) => item && item.label !== '불참' && item.label !== '뱀새끼 발언')
+}
+
 export function loadGame(): GameState | null {
   try {
     const raw = localStorage.getItem(KEY)
@@ -77,9 +88,12 @@ export function loadGame(): GameState | null {
     const data = JSON.parse(raw) as GameState
     if (!data || typeof data.rapName !== 'string' || !data.stats || !data.screen) return null
     const base = freshState()
+    const smtmAppeared = hadSmtmAppearance(data)
     return {
       ...base,
       ...data,
+      smtmAppeared,
+      snakeTag: Boolean(data.snakeTag) || (Boolean(data.smtmTrashTalk) && smtmAppeared),
       stats: { ...base.stats, ...data.stats },
       buzz: typeof data.buzz === 'number' ? data.buzz : 1,
       phaseEventFired: Boolean(data.phaseEventFired),

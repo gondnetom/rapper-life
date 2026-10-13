@@ -469,26 +469,39 @@ function reduce(state: GameState, action: Action): GameState {
         notice: '쇼미에는 나가지 않았다. 꼬리표는 없다.',
         timeline: [...state.timeline, line(state, '쇼미 불참', '출연을 거절했다. 꼬리표는 없다.')],
       })
-    case 'smtm-trash':
+    case 'smtm-trash': {
+      const appeared = state.smtmAppeared
       return finishPhase({
         ...state,
         smtmTrashTalk: true,
+        snakeTag: state.snakeTag || appeared,
         smtmSeasons: [...(state.smtmSeasons ?? []).filter((item) => item.phase !== state.phase), { phase: state.phase, label: '뱀새끼 발언' }],
-        notice: trashReactions(state.rapName),
-        timeline: [...state.timeline, line(state, '뱀새끼 발언', '쇼미에 나갔으면서 뱀새끼라고 깎았다. 그 말이 캡처되기 쉽다.')],
+        notice: trashReactions(state.rapName, appeared),
+        timeline: [
+          ...state.timeline,
+          line(
+            state,
+            '뱀새끼 발언',
+            appeared
+              ? '쇼미에 나갔다가, 나가면 구리다고 욕했다. 그 표시가 레이블 옆에 붙었다.'
+              : '쇼미 나가면 구리다고 욕했다. 나중에 출연하면 그 표시가 레이블 옆에 붙는다.',
+          ),
+        ],
       })
+    }
     case 'smtm-join': {
       let timeline = state.timeline
       let notice: string | null = null
       let snake = state.snakeTag
       if (state.smtmTrashTalk && !state.snakeTag) {
         snake = true
-        notice = '예전 말이 붙었다. 이제 닉 앞에 남는다.'
-        timeline = [...timeline, line(state, '뱀새끼', '뱀새끼라고 해 놓고 출연했다. 그 말이 닉 앞에 붙었다.')]
+        notice = '욕부터 하고 출연했다. 뱀새끼가 레이블 옆에 붙었다.'
+        timeline = [...timeline, line(state, '뱀새끼', '쇼미를 욕하고 나서 출연했다. 그 표시가 레이블 옆에 붙었다.')]
       }
       return openRound(
         {
           ...state,
+          smtmAppeared: true,
           snakeTag: snake,
           timeline,
           notice,
@@ -621,7 +634,7 @@ function reduce(state: GameState, action: Action): GameState {
           line(
             state,
             won ? '쇼미 우승' : '쇼미 탈락',
-            `${PHASES[state.phase].name} 시즌은 ${label}이다. ${state.snakeTag ? '예전 말이 닉 앞에 붙었다. ' : ''}${prizeText}${rippleText}.`,
+            `${PHASES[state.phase].name} 시즌은 ${label}이다. ${state.snakeTag ? '그 표시는 레이블 옆에 붙었다. ' : ''}${prizeText}${rippleText}.`,
           ),
         ],
       })
