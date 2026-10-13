@@ -37,7 +37,7 @@ export function describeCareer(state: GameState): { title: string; blurb: string
   }
   if (state.ownLabel) {
     return {
-      title: '사장',
+      title: '자기 간판',
       blurb: `${state.labelName ?? '자기 레이블'} 간판을 직접 달고, 정산은 자기가 했다.`,
     }
   }

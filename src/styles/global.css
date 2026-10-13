@@ -570,6 +570,7 @@ h1, h2, p { margin: 0; }
 .action-row strong { display: block; font-size: 13px; }
 .action-row span { color: #9a9a9a; font-size: 12px; line-height: 1.4; }
 .action-brief { color: #d7d7d7; font-size: 13px; line-height: 1.45; margin: 0 0 8px; }
+.diss-brief { color: #9a9a9a; font-size: 13px; line-height: 1.45; margin: -2px 0 8px; }
 .line-row {
   background: #1b1b1b;
   border-left: 4px solid var(--green);

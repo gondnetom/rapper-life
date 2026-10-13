@@ -68,12 +68,17 @@ function smtmSeasonCards(state: GameState): { name: string; label: string }[] {
   })
 }
 
-function isFightTitle(title: string) {
+function isDissTitle(title: string) {
   return title.includes('맞장') || title.includes('디스')
 }
 
-function isFeatureTitle(title: string) {
-  return title.includes('피처링')
+function dissLabel(title: string) {
+  return title.split('맞장').join('디스')
+}
+
+function affiliation(state: GameState) {
+  if (state.signedLabel || state.ownLabel) return state.labelName ?? '레이블'
+  return '인디'
 }
 
 function biography(state: GameState): string[] {
@@ -124,7 +129,7 @@ function paint(state: GameState) {
   const chips = [
     state.genre ? GENRE_LABEL[state.genre] : '',
     origin?.place ?? '',
-    state.ownLabel ? '사장' : state.signedLabel ? (state.labelName ?? '레이블') : '인디',
+    affiliation(state),
     state.snakeTag ? '뱀새끼' : '',
     `잔고 ${formatWon(state.money)}`,
     `이름값 ${formatRep(state.reputation)}`,
@@ -208,47 +213,23 @@ function paint(state: GameState) {
     y += 8
   }
 
-  const fights = history.flatMap((group) => group.items.filter((item) => isFightTitle(item.title)))
-  const features = history.flatMap((group) => group.items.filter((item) => isFeatureTitle(item.title)))
-  if (fights.length) {
-    ctx.fillStyle = color
-    ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
-    ctx.fillText('맞장 · 디스', 72, y + 28)
-    y += 52
-    ctx.fillStyle = '#d7d7d7'
-    ctx.font = '500 26px Pretendard, Malgun Gothic, sans-serif'
-    y = wrap(ctx, fights.map((item) => item.title).join(' · '), 72, y, 936, 40)
-    y += 8
-  }
-  if (features.length) {
-    ctx.fillStyle = color
-    ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
-    ctx.fillText('피처링', 72, y + 28)
-    y += 52
-    for (const item of features) {
-      ctx.fillStyle = '#1b1b1b'
-      ctx.fillRect(72, y, 936, 86)
-      ctx.fillStyle = '#ffffff'
-      ctx.font = '700 28px Pretendard, Malgun Gothic, sans-serif'
-      ctx.fillText(item.title, 104, y + 34)
-      ctx.fillStyle = '#9a9a9a'
-      ctx.font = '400 22px Pretendard, Malgun Gothic, sans-serif'
-      ctx.fillText(item.detail.length > 42 ? `${item.detail.slice(0, 42)}…` : item.detail, 104, y + 66)
-      y += 98
-    }
-  }
-
   for (const group of history) {
     ctx.fillStyle = color
     ctx.font = '800 30px Pretendard, Malgun Gothic, sans-serif'
     ctx.fillText(group.name, 72, y + 28)
     y += 48
     const brief = group.items.filter((item) => BRIEF_ACTIONS.has(item.title))
-    const full = group.items.filter((item) => !BRIEF_ACTIONS.has(item.title) && !isFightTitle(item.title) && !isFeatureTitle(item.title))
+    const disses = group.items.filter((item) => isDissTitle(item.title))
+    const full = group.items.filter((item) => !BRIEF_ACTIONS.has(item.title) && !isDissTitle(item.title))
     if (brief.length) {
       ctx.fillStyle = '#d7d7d7'
       ctx.font = '500 26px Pretendard, Malgun Gothic, sans-serif'
       y = wrap(ctx, brief.map((item) => item.title).join(' · '), 96, y + 8, 900, 40)
+    }
+    if (disses.length) {
+      ctx.fillStyle = '#b3b3b3'
+      ctx.font = '500 24px Pretendard, Malgun Gothic, sans-serif'
+      y = wrap(ctx, disses.map((item) => dissLabel(item.title)).join(' · '), 96, y + 8, 900, 36)
     }
     for (const item of full) {
       ctx.fillStyle = '#1b1b1b'
@@ -374,7 +355,7 @@ export function ShareCard({ state }: { state: GameState }) {
   }
 
   const color = state.genre ? GENRE_COLOR[state.genre] : '#1db954'
-  const labelText = state.ownLabel ? '사장' : state.signedLabel ? (state.labelName ?? '레이블') : '인디'
+  const labelText = affiliation(state)
   const chipHead = [state.genre ? GENRE_LABEL[state.genre] : '', origin?.place ?? '', labelText].filter(Boolean).join('  ·  ')
   const chipTail = [
     `잔고 ${formatWon(state.money)}`,
@@ -438,30 +419,15 @@ export function ShareCard({ state }: { state: GameState }) {
               </div>
             </>
           )}
-          {history.flatMap((group) => group.items.filter((item) => isFightTitle(item.title))).length > 0 && (
-            <>
-              <h3 style={{ color }}>맞장 · 디스</h3>
-              <p className="action-brief">
-                {history
-                  .flatMap((group) => group.items.filter((item) => isFightTitle(item.title)))
-                  .map((item) => item.title)
-                  .join(' · ')}
-              </p>
-            </>
-          )}
-          {history.flatMap((group) => group.items.filter((item) => isFeatureTitle(item.title))).map((item) => (
-            <div className="action-row" key={item.id}>
-              <strong>{item.title}</strong>
-              <span>{item.detail}</span>
-            </div>
-          ))}
           {history.map((group) => {
             const brief = group.items.filter((item) => BRIEF_ACTIONS.has(item.title))
-            const full = group.items.filter((item) => !BRIEF_ACTIONS.has(item.title) && !isFightTitle(item.title) && !isFeatureTitle(item.title))
+            const disses = group.items.filter((item) => isDissTitle(item.title))
+            const full = group.items.filter((item) => !BRIEF_ACTIONS.has(item.title) && !isDissTitle(item.title))
             return (
               <div className="phase-log" key={`${group.phase}-${group.items[0]?.id}`}>
                 <b style={{ color }}>{group.name}</b>
                 {brief.length > 0 && <p className="action-brief">{brief.map((item) => item.title).join(' · ')}</p>}
+                {disses.length > 0 && <p className="diss-brief">{disses.map((item) => dissLabel(item.title)).join(' · ')}</p>}
                 {full.map((item) => (
                   <div className="action-row" key={item.id}>
                     <strong>{item.title}</strong>
