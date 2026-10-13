@@ -9,7 +9,7 @@ export function NameScreen({ dispatch }: { dispatch: Dispatch }) {
     <section>
       <p className="kicker">HIPHOP</p>
       <h1 className="screen-title">한국 래퍼의 삶</h1>
-      <p className="lede">이름을 정하면 지망생으로 시작한다. 동네가 주력 장르를 정한다.</p>
+      <p className="lede">이름을 정하면 지망생으로 시작한다.</p>
       <form
         className="stack"
         onSubmit={(event) => {
@@ -28,7 +28,7 @@ export function NameScreen({ dispatch }: { dispatch: Dispatch }) {
             value={name}
             maxLength={20}
             autoComplete="off"
-            placeholder="예: 야간버스"
+            placeholder="예: 칸예"
             onChange={(event) => setName(event.target.value)}
           />
         </label>

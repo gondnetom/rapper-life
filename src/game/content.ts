@@ -4,14 +4,18 @@ import type { Genre, StatKey, Stats, TimelineItem, TrainId } from './types'
 export const GENRE_LABEL: Record<Genre, string> = {
   boomBap: '붐뱁',
   trap: '트랩',
-  mumble: '멍청트랩',
   rage: '레이지',
+  drill: '드릴',
 }
 
-export const GENRES: Genre[] = ['boomBap', 'trap', 'mumble', 'rage']
+export const GENRES: Genre[] = ['boomBap', 'trap', 'rage', 'drill']
+
+export function genreShow(genre: Genre): string {
+  return GENRE_LABEL[genre]
+}
 
 export const PHASES = [
-  { name: '신입', desc: '이름은 있는데, 곡은 아직 데모다.' },
+  { name: '초창기', desc: '이름은 있는데, 곡은 아직 데모다.' },
   { name: '전성기', desc: '색깔이 보이면 음원 얘기가 시작된다.' },
   { name: '황혼기', desc: '마지막 구간이다. 반응이 오기 전에 접을 수도 있다.' },
 ]
@@ -110,63 +114,82 @@ export function producerNames(producer: { names: string[] }): string {
   return producer.names.join(', ')
 }
 
-export interface Origin {
-  id: string
-  place: string
+export interface GenreStart {
   genre: Genre
+  place: string
   entry: string
   stats: Stats
   story: string
 }
 
-export const ORIGINS: Origin[] = [
+const LEGACY_ORIGIN: Record<string, Genre> = {
+  hongdae: 'boomBap',
+  gangnam: 'trap',
+  sinrim: 'trap',
+  mumble: 'trap',
+  incheon: 'rage',
+}
+
+export const GENRE_STARTS: GenreStart[] = [
   {
-    id: 'hongdae',
-    place: '홍대',
     genre: 'boomBap',
+    place: '홍대',
     entry: '전단지보다 CD',
     stats: { lyric: 24, compose: 14, flow: 16, club: 10, pr: 8 },
-    story:
-      '{name} 홍대에서 힙합을 시작했다. 전단지보다 형의 CD가 먼저였다. 붐뱁을 주력으로 잡았고, 저음보다 가사가 먼저 들렸다.',
+    story: '{name} 홍대에서 힙합을 시작했다. 전단지보다 형의 CD가 먼저였다. 붐뱁을 주력으로 잡았고, 저음보다 가사가 먼저 들렸다.',
   },
   {
-    id: 'gangnam',
-    place: '강남',
     genre: 'trap',
+    place: '강남',
     entry: '808이 먼저',
     stats: { lyric: 12, compose: 16, flow: 18, club: 22, pr: 18 },
-    story:
-      '{name} 강남 클럽에서 시작했다. 문장보다 808이 먼저 가슴을 밀었다. 트랩을 주력으로 잡았고, 계산서보다 저음이 남았다.',
+    story: '{name} 강남 클럽에서 시작했다. 문장보다 808이 먼저 가슴을 밀었다. 트랩을 주력으로 잡았고, 계산서보다 저음이 남았다.',
   },
   {
-    id: 'sinrim',
-    place: '신림',
-    genre: 'mumble',
-    entry: '원룸 숏폼',
-    stats: { lyric: 10, compose: 18, flow: 14, club: 8, pr: 22 },
-    story:
-      '{name} 신림 원룸에서 숏폼으로 시작했다. 가사는 안 들리고 오토튠만 또렷했다. 멍청트랩은 고른 장르가 아니라, 방이 좁아서 그렇게 됐다.',
-  },
-  {
-    id: 'incheon',
-    place: '인천',
     genre: 'rage',
+    place: '인천',
     entry: '야간 소음',
     stats: { lyric: 14, compose: 12, flow: 22, club: 16, pr: 10 },
-    story:
-      '{name} 인천 야간 영상으로 시작했다. 해외 라이브는 노래가 아니라 소음이었다. 그래서 레이지를 주력으로 잡았다. 힙합은 참는 장르가 아니다.',
+    story: '{name} 인천 야간 영상으로 시작했다. 해외 라이브는 노래가 아니라 소음이었다. 그래서 레이지를 주력으로 잡았다. 힙합은 참는 장르가 아니다.',
+  },
+  {
+    genre: 'drill',
+    place: '영등포',
+    entry: '슬라이드 808',
+    stats: { lyric: 16, compose: 18, flow: 16, club: 18, pr: 12 },
+    story: '{name} 영등포에서 시작했다. 슬라이드 베이스 위에 칼같이 끊는 플로우를 올렸다. 드릴이 주력이었다.',
   },
 ]
+
+export function genreStart(id: string | null | undefined): GenreStart | undefined {
+  if (!id) return undefined
+  const genre = readGenre(id)
+  return GENRE_STARTS.find((item) => item.genre === genre)
+}
+
+export function readGenre(value: unknown): Genre | null {
+  if (typeof value !== 'string' || !value) return null
+  if ((GENRES as string[]).includes(value)) return value as Genre
+  return LEGACY_ORIGIN[value] ?? null
+}
 
 export const TRAIN_ACTIONS: { id: TrainId; label: string; stat: StatKey; detail: string }[] = [
   { id: 'lyric', label: '라임 연습', stat: 'lyric', detail: '노트에 라임을 채운다' },
   { id: 'compose', label: '비트 작업', stat: 'compose', detail: '킥이랑 808을 만진다' },
   { id: 'club', label: '클럽 공연', stat: 'club', detail: '밤에 직접 라이브를 한다' },
-  { id: 'battle', label: '랩레슨하기', stat: 'lyric', detail: '선배 앞에서 랩을 배운다' },
+  { id: 'battle', label: '랩레슨받기', stat: 'lyric', detail: '선배 앞에서 랩을 배운다' },
   { id: 'insta', label: '인스타', stat: 'pr', detail: '스토리로 이름을 알린다' },
   { id: 'throat', label: '목상태', stat: 'club', detail: '성대를 아끼고 라이브를 유지한다' },
-  { id: 'tonic', label: '보약', stat: 'flow', detail: '세 번 중 두 번은 된다. 되면 스탯이 전부 오르고, 실패하면 커리어가 끝난다' },
+  { id: 'tonic', label: '보약', stat: 'flow', detail: '성공확률은 60%. 되면 스탯이 전부 오르고, 실패하면 커리어가 끝난다' },
 ]
+
+export function trainActions(phase: number) {
+  return TRAIN_ACTIONS.map((action) => {
+    if (action.id !== 'battle') return action
+    if (phase === 0) return action
+    return { ...action, label: '랩레슨하기', detail: '후배를 가르친다' }
+  })
+}
 
 const INSTA_SUCCESS = [
   '릴스가 알고리즘에 걸려서 홍보가 올랐다.',
@@ -185,7 +208,7 @@ const TRAIN_SUCCESS: Record<TrainId, string> = {
   lyric: '라임이 하나 붙었다.',
   compose: '킥이 자리에 앉아서 비트가 올랐다.',
   club: '클럽 공연이 먹혔다. 다음 주도 서라고 한다.',
-  battle: '랩 레슨이 먹혀서 라임이 늘었다.',
+  battle: '레슨이 먹혀서 라임이 늘었다.',
   insta: INSTA_SUCCESS[0],
   throat: '목이 풀려서 라이브가 조금 올랐다.',
   tonic: '보약이 먹혀서 스탯이 전부 올랐다.',
@@ -195,7 +218,7 @@ const TRAIN_FAIL: Record<TrainId, string> = {
   lyric: '라임이 중간에 끊겼다.',
   compose: '808이 킥을 잡아먹었다.',
   club: '공연이 잘렸다. 관객이 등을 돌렸다.',
-  battle: '레슨에서 박자만 놓쳤다.',
+  battle: '레슨에서 박자를 놓쳤다.',
   insta: INSTA_FAIL[0],
   throat: '목이 잠겼다. 오늘은 쉬는 게 낫다.',
   tonic: '보약이 목을 닫아서 커리어가 끝났다.',
@@ -206,6 +229,7 @@ export const BRIEF_ACTIONS = new Set([
   '비트 작업',
   '클럽 공연',
   '랩레슨하기',
+  '랩레슨받기',
   '배틀 구경',
   '인스타',
   '목상태',
@@ -216,19 +240,23 @@ export const BRIEF_ACTIONS = new Set([
   '목 관리',
 ])
 
-export function trainNotice(id: TrainId, ok: boolean): string {
+export function trainNotice(id: TrainId, ok: boolean, phase = 0): string {
   if (id === 'insta') {
     const bank = ok ? INSTA_SUCCESS : INSTA_FAIL
     return bank[Math.floor(Math.random() * bank.length)]
+  }
+  if (id === 'battle') {
+    if (phase === 0) return ok ? '선배 레슨이 먹혀서 라임이 늘었다.' : '레슨에서 박자를 놓쳤다.'
+    return ok ? '후배를 가르치다 내 라임도 정리됐다.' : '가르치다 박자를 놓쳤다.'
   }
   return ok ? TRAIN_SUCCESS[id] : TRAIN_FAIL[id]
 }
 
 const DIST: Record<Genre, Record<Genre, number>> = {
-  boomBap: { boomBap: 0, trap: 2, mumble: 3, rage: 3 },
-  trap: { boomBap: 2, trap: 0, mumble: 1, rage: 1 },
-  mumble: { boomBap: 3, trap: 1, mumble: 0, rage: 2 },
-  rage: { boomBap: 3, trap: 1, mumble: 2, rage: 0 },
+  boomBap: { boomBap: 0, trap: 2, rage: 3, drill: 2 },
+  trap: { boomBap: 2, trap: 0, rage: 1, drill: 1 },
+  rage: { boomBap: 3, trap: 1, rage: 0, drill: 1 },
+  drill: { boomBap: 2, trap: 1, rage: 1, drill: 0 },
 }
 
 export function genreDistance(from: Genre, to: Genre): number {
@@ -304,15 +332,15 @@ const HIP_GENRE: Record<Genre, Record<'low' | 'mid' | 'high', string[]>> = {
     mid: ['808은 클럽에서 통한다. 랩은 아직 언더다.', '트랩 박자는 타는데 훅이 약하다.'],
     high: ['808 위에서 안 밀린다. 클럽에 틀 만하다.', '하이햇 사이에 라임이 들어간다. 인정한다.'],
   },
-  mumble: {
-    low: ['가사 없이 오토튠만 잔뜩이다. 한 마디도 안 들린다.', '멍청트랩이면 안 들려도 되는데, 이건 컨셉이 아니다.'],
-    mid: ['멜로디는 남는데 단어가 안 들린다. 반반이다.', '오토튠은 맞는데 벌스가 훅을 못 이긴다.'],
-    high: ['안 들려도 훅이 남는다. 컨셉은 성공이다.', '오토튠 안에서도 라임이 보인다. 인정한다.'],
-  },
   rage: {
     low: ['소리지른다고 레이지는 아니다. 박자가 없다.', '왜곡만 세고 랩은 갈라진다.'],
     mid: ['에너지는 있는데 한 소절이 안 남는다.', '레이지 톤은 맞는데 벌스가 짧다.'],
     high: ['질러도 박자 안에 있다. 레이지가 맞다.', '왜곡된 808을 랩이 밀어낸다. 인정한다.'],
+  },
+  drill: {
+    low: ['슬라이드만 있고 플로우는 안 끊긴다.', '드릴인 척하는데 킥 패턴이 트랩이다.'],
+    mid: ['베이스는 드릴인데 칼이 무디다.', '끊는 맛은 있는데 한 소절이 약하다.'],
+    high: ['슬라이드 위에 플로우가 칼이다. 드릴이 맞다.', '킥이 밀고, 랩이 자른다. 인정한다.'],
   },
 }
 

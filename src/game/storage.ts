@@ -1,5 +1,5 @@
-import { RIVALS } from './content'
-import type { GameState, SmtmRoundRecord, SmtmSeason, Stats } from './types'
+import { RIVALS, readGenre } from './content'
+import type { GameState, PendingShift, SmtmRoundRecord, SmtmSeason, Stats } from './types'
 
 const KEY = 'rapper-life-v2'
 
@@ -28,6 +28,7 @@ export function freshState(): GameState {
     smtmTrashTalk: false,
     smtmAppeared: false,
     snakeTag: false,
+    nepotismTag: false,
     tonicEnd: false,
     smtmBestClears: -1,
     smtmWins: 0,
@@ -66,9 +67,20 @@ function readSmtmLog(value: unknown): SmtmRoundRecord[] {
     const row = item as SmtmRoundRecord
     const result = row.result
     if (!result || typeof result.roundName !== 'string' || typeof result.passed !== 'boolean') continue
-    rows.push({ phase: typeof row.phase === 'number' ? row.phase : 0, result })
+    rows.push({
+      phase: typeof row.phase === 'number' ? row.phase : 0,
+      result: { ...result, nepotism: Boolean(result.nepotism) },
+    })
   }
   return rows
+}
+
+function readShift(shift: PendingShift | null | undefined): PendingShift | null {
+  if (!shift) return null
+  const from = readGenre(shift.from)
+  const to = readGenre(shift.to)
+  if (!from || !to || from === to) return null
+  return { ...shift, from, to }
 }
 
 function hadSmtmAppearance(data: Partial<GameState>): boolean {
@@ -94,6 +106,7 @@ export function loadGame(): GameState | null {
       ...data,
       smtmAppeared,
       snakeTag: Boolean(data.snakeTag) || (Boolean(data.smtmTrashTalk) && smtmAppeared),
+      nepotismTag: Boolean(data.nepotismTag) || readSmtmLog(data.smtmLog).some((row) => row.result.nepotism),
       stats: { ...base.stats, ...data.stats },
       buzz: typeof data.buzz === 'number' ? data.buzz : 1,
       phaseEventFired: Boolean(data.phaseEventFired),
@@ -108,15 +121,28 @@ export function loadGame(): GameState | null {
       smtmSeasons: Array.isArray(data.smtmSeasons)
         ? data.smtmSeasons.filter((item): item is SmtmSeason => Boolean(item && typeof item.phase === 'number' && typeof item.label === 'string'))
         : [],
-      beatId: data.beatId ?? null,
-      usedBeats: Array.isArray(data.usedBeats) ? data.usedBeats : [],
+      tab: data.tab === 'album' || data.tab === 'log' ? data.tab : 'now',
+      genre: readGenre(data.genre),
+      originId: readGenre(data.originId) ?? data.originId,
+      pendingShift: readShift(data.pendingShift),
+      lastRelease: data.lastRelease
+        ? { ...data.lastRelease, genre: readGenre(data.lastRelease.genre) ?? 'trap' }
+        : null,
+      history: (data.history ?? []).map((item) => ({
+        ...item,
+        genre: readGenre(item.genre) ?? 'trap',
+      })),
+      beatId: typeof data.beatId === 'string' && data.beatId.startsWith('mumble') ? null : data.beatId ?? null,
+      usedBeats: Array.isArray(data.usedBeats) ? data.usedBeats.filter((id) => !id.startsWith('mumble')) : [],
       draftCoverId: typeof data.draftCoverId === 'string' ? data.draftCoverId : null,
       tracks: (data.tracks ?? []).map((track) => ({
         ...track,
+        genre: readGenre(track.genre) ?? 'trap',
         rhythmMark: track.rhythmMark ?? 0,
         audioId: track.audioId ?? null,
-        beatId: track.beatId ?? null,
+        beatId: typeof track.beatId === 'string' && track.beatId.startsWith('mumble') ? null : track.beatId ?? null,
         coverId: typeof track.coverId === 'string' ? track.coverId : null,
+        source: track.source === 'smtm' ? 'smtm' : 'release',
       })),
     }
   } catch {

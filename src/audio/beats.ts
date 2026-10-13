@@ -22,14 +22,14 @@ export const BEAT_POOL: BeatTrack[] = [
   { id: 'trap-2', genre: 'trap', src: asset('beats/trap-2.mp3'), bpm: 140, credit: 'Hard Hype Trap · Alex Morgan · CC BY 4.0' },
   { id: 'trap-3', genre: 'trap', src: asset('beats/trap-3.mp3'), bpm: 140, credit: 'Trap Beat · Alex Morgan · CC BY 4.0' },
   { id: 'trap-4', genre: 'trap', src: asset('beats/trap-4.mp3'), bpm: 130, credit: 'Dark Trap · Alex Morgan · CC BY 4.0' },
-  { id: 'mumble-1', genre: 'mumble', src: asset('beats/mumble-1.mp3'), bpm: 136, credit: 'Cloud Rap · Alex Morgan · CC BY 4.0' },
-  { id: 'mumble-2', genre: 'mumble', src: asset('beats/mumble-2.mp3'), bpm: 140, credit: 'Lazy Trap · Alex Morgan · CC BY 4.0' },
-  { id: 'mumble-3', genre: 'mumble', src: asset('beats/mumble-3.mp3'), bpm: 150, credit: 'Warm Keys · Alex Morgan · CC BY 4.0' },
-  { id: 'mumble-4', genre: 'mumble', src: asset('beats/mumble-4.mp3'), bpm: 130, credit: 'ITS A TRAP · HoliznaCC0 · CC0' },
   { id: 'rage-1', genre: 'rage', src: asset('beats/rage-1.mp3'), bpm: 133, credit: 'Phonk Music · Alex Morgan · CC BY 4.0' },
   { id: 'rage-2', genre: 'rage', src: asset('beats/rage-2.mp3'), bpm: 130, credit: 'Phonk Songs · Alex Morgan · CC BY 4.0' },
   { id: 'rage-3', genre: 'rage', src: asset('beats/rage-3.mp3'), bpm: 150, credit: 'Phonk ish · HoliznaCC0 · CC0' },
   { id: 'rage-4', genre: 'rage', src: asset('beats/rage-4.mp3'), bpm: 180, credit: 'Phonk Remix · HoliznaCC0 · CC0' },
+  { id: 'drill-1', genre: 'drill', src: asset('beats/trap-1.mp3'), bpm: 144, credit: 'Rolling Hi-Hats · Alex Morgan · CC BY 4.0' },
+  { id: 'drill-2', genre: 'drill', src: asset('beats/trap-2.mp3'), bpm: 140, credit: 'Hard Hype Trap · Alex Morgan · CC BY 4.0' },
+  { id: 'drill-3', genre: 'drill', src: asset('beats/trap-4.mp3'), bpm: 130, credit: 'Dark Trap · Alex Morgan · CC BY 4.0' },
+  { id: 'drill-4', genre: 'drill', src: asset('beats/rage-3.mp3'), bpm: 150, credit: 'Phonk ish · HoliznaCC0 · CC0' },
 ]
 
 export function beatById(id: string | null | undefined, genre: Genre): BeatTrack {

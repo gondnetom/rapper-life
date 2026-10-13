@@ -1,4 +1,4 @@
-export type Genre = 'boomBap' | 'trap' | 'mumble' | 'rage'
+export type Genre = 'boomBap' | 'trap' | 'rage' | 'drill'
 
 export type Screen =
   | 'name'
@@ -48,6 +48,7 @@ export interface Track {
   coverId: string | null
   money: number
   shift: 'boom' | 'bust' | null
+  source?: 'release' | 'smtm'
 }
 
 export interface SmtmSeason {
@@ -87,6 +88,7 @@ export interface YoutubeResult {
   producer: string
   producerLine: string
   seasonEarned: number
+  nepotism: boolean
 }
 
 export interface SmtmRoundRecord {
@@ -147,6 +149,7 @@ export interface GameState {
   smtmTrashTalk: boolean
   smtmAppeared: boolean
   snakeTag: boolean
+  nepotismTag: boolean
   tonicEnd: boolean
   smtmBestClears: number
   smtmWins: number

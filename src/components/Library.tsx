@@ -1,31 +1,34 @@
 import { useEffect, useState } from 'react'
 import { loadCover } from '../audio/covers'
 import { playTake, stopTake } from '../audio/takes'
-import { shareAlbum } from '../lib/albumShare'
-import { GENRE_LABEL, PHASES, groupTimeline } from '../game/content'
+import { shareAlbum, shareTracks } from '../lib/albumShare'
+import { smtmCoverBlob } from '../lib/smtmCover'
+import { PHASES, genreShow, groupTimeline } from '../game/content'
 import { formatRep, formatWon, statLabel, VISIBLE_STATS } from '../game/format'
 import type { GameState, TimelineItem, Track } from '../game/types'
 import type { Dispatch } from '../game/reducer'
 
-function CoverFace({ track, playing }: { track: Track; playing: boolean }) {
+function CoverFace({ track, rapName, playing }: { track: Track; rapName: string; playing: boolean }) {
   const [url, setUrl] = useState('')
   useEffect(() => {
     let current = ''
     let alive = true
-    if (!track.coverId) {
-      setUrl('')
-      return
-    }
-    void loadCover(track.coverId).then((blob) => {
-      if (!alive || !blob) return
+    void (async () => {
+      let blob: Blob | null = null
+      if (track.source === 'smtm') blob = await smtmCoverBlob({ rapName, title: track.title })
+      else if (track.coverId) blob = await loadCover(track.coverId)
+      if (!alive || !blob) {
+        if (alive) setUrl('')
+        return
+      }
       current = URL.createObjectURL(blob)
       setUrl(current)
-    })
+    })()
     return () => {
       alive = false
       if (current) URL.revokeObjectURL(current)
     }
-  }, [track.coverId])
+  }, [track.coverId, track.source, track.title, rapName])
   return (
     <>
       {url && <img src={url} alt="" />}
@@ -58,24 +61,51 @@ export function CareerTimeline({ items }: { items: TimelineItem[] }) {
   )
 }
 
-export function AlbumList({ state }: { state: GameState }) {
+function TrackShelf({
+  tracks,
+  rapName,
+  empty,
+  saveLabel,
+}: {
+  tracks: Track[]
+  rapName: string
+  empty: string
+  saveLabel: string
+}) {
   const [open, setOpen] = useState<string | null>(null)
   const [playing, setPlaying] = useState<string | null>(null)
   const [note, setNote] = useState('')
   const [shareNote, setShareNote] = useState<{ id: string; text: string } | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
+  const [batch, setBatch] = useState('')
 
   useEffect(() => () => stopTake(), [])
 
-  if (!state.tracks.length) return <p className="empty">아직 낸 곡이 없다.</p>
+  if (!tracks.length) return <p className="empty">{empty}</p>
   return (
     <div>
-      {state.tracks.map((track) => {
+      <button
+        className="btn-secondary btn-wide"
+        type="button"
+        disabled={busy === 'all'}
+        onClick={() => {
+          setBusy('all')
+          setBatch('저장하는 중이다.')
+          void shareTracks(tracks, rapName).then((message) => {
+            setBatch(message)
+            setBusy(null)
+          })
+        }}
+      >
+        {saveLabel}
+      </button>
+      {batch && <p className="note">{batch}</p>}
+      {tracks.map((track) => {
         const expanded = open === track.id
         return (
           <article className="track" key={track.id}>
             <button
-              className={`cover genre-${track.genre}`}
+              className={`cover ${track.source === 'smtm' ? 'smtm' : `genre-${track.genre}`}`}
               type="button"
               onClick={() => {
                 void (async () => {
@@ -92,12 +122,13 @@ export function AlbumList({ state }: { state: GameState }) {
                 })()
               }}
             >
-              <CoverFace track={track} playing={playing === track.id} />
+              <CoverFace track={track} rapName={rapName} playing={playing === track.id} />
             </button>
             <button className="track-meta" type="button" onClick={() => setOpen(expanded ? null : track.id)}>
               <b>{track.title}</b>
               <span>
-                {PHASES[track.phase]?.name} · {GENRE_LABEL[track.genre]} · 리드머 {track.rhythmMark.toFixed(1)}/5.0
+                {track.source === 'smtm' ? '쇼미 · ' : ''}
+                {PHASES[track.phase]?.name} · {genreShow(track.genre)} · 리드머 {track.rhythmMark.toFixed(1)}/5.0
                 {track.shift === 'boom' ? ' · 노선 호평' : track.shift === 'bust' ? ' · 노선 혹평' : ''}
               </span>
             </button>
@@ -113,7 +144,7 @@ export function AlbumList({ state }: { state: GameState }) {
                   setOpen(track.id)
                   setBusy(track.id)
                   setShareNote({ id: track.id, text: '커버를 뽑는 중이다.' })
-                  void shareAlbum(track, state.rapName).then((message) => {
+                  void shareAlbum(track, rapName).then((message) => {
                     setShareNote(message ? { id: track.id, text: message } : null)
                     setBusy(null)
                   })
@@ -125,7 +156,7 @@ export function AlbumList({ state }: { state: GameState }) {
             {expanded && (
               <div className="track-body">
                 <p>
-                  {GENRE_LABEL[track.genre]} · 라임 {track.writingScore} · 스킬 {track.performScore} · {formatWon(track.money)}
+                  {genreShow(track.genre)} · 라임 {track.writingScore} · 스킬 {track.performScore} · {formatWon(track.money)}
                 </p>
                 {playing === track.id && note && <p className="note">{note}</p>}
                 {shareNote?.id === track.id && shareNote.text && <p className="note">{shareNote.text}</p>}
@@ -137,6 +168,17 @@ export function AlbumList({ state }: { state: GameState }) {
         )
       })}
     </div>
+  )
+}
+
+export function AlbumList({ state }: { state: GameState }) {
+  return (
+    <TrackShelf
+      tracks={state.tracks}
+      rapName={state.rapName}
+      empty="아직 낸 곡이 없다."
+      saveLabel="앨범 전체 저장"
+    />
   )
 }
 

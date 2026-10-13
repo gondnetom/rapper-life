@@ -40,16 +40,24 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 .kicker { margin: 0; color: var(--muted); font-size: 12px; letter-spacing: 0.04em; }
 .top-row { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
 .rap-name { margin: 2px 0 0; font-size: 22px; letter-spacing: -0.04em; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.snake-mark {
+.snake-mark,
+.nepo-mark {
   display: inline-flex;
   align-items: center;
   height: 22px;
   padding: 0 8px;
   border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.snake-mark {
   background: #5a1515;
   color: #ffd0d0;
-  font-size: 12px;
-  letter-spacing: 0;
+}
+.nepo-mark {
+  background: #3a2a08;
+  color: #ffd56a;
 }
 .top-meta { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
 .badges { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
@@ -505,8 +513,9 @@ h1, h2, p { margin: 0; }
 .share-mini:disabled { color: var(--muted); }
 .genre-boomBap { background: linear-gradient(160deg, #8d6a45, #1c140e); }
 .genre-trap { background: linear-gradient(160deg, #1db954, #0c2e18); }
-.genre-mumble { background: linear-gradient(160deg, #8d7cff, #1d1638); }
 .genre-rage { background: linear-gradient(160deg, #ff3b3b, #2a0c0c); }
+.genre-drill { background: linear-gradient(160deg, #e0a21a, #2a1c06); }
+.cover.smtm { background: radial-gradient(circle at 50% 42%, #5a4308, #070707 72%); }
 .track b { display: block; }
 .track span, .empty { color: var(--muted); }
 
@@ -560,8 +569,14 @@ h1, h2, p { margin: 0; }
 .smtm-card span { font-size: 16px; font-weight: 800; }
 .share-card .arch { font-size: 18px; font-weight: 800; }
 .share-card .blurb { color: #d0d0d0; line-height: 1.45; margin: 8px 0; }
-.chip-line { color: #fff; font-weight: 700; font-size: 13px; line-height: 1.5; margin: 0 0 14px; }
-.chip-line .snake-mark { margin: 0 6px; vertical-align: middle; }
+.chip-line { color: #fff; font-weight: 700; font-size: 13px; line-height: 1.5; margin: 0 0 10px; }
+.poster-marks { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+.share-card .poster-marks .snake-mark,
+.share-card .poster-marks .nepo-mark {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 14px;
+}
 .share-card h3 { font-size: 15px; margin: 16px 0 8px; }
 .bio-line { color: #d7d7d7; font-size: 13px; line-height: 1.45; margin: 0 0 6px; }
 .style-line {

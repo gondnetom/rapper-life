@@ -27,7 +27,7 @@ export function LabelGate({ state, dispatch }: { state: GameState; dispatch: Dis
   const offers = labelOffers(state.reputation)
   return (
     <section>
-        <p className="kicker">신입 끝</p>
+        <p className="kicker">초창기 끝</p>
         <h1 className="screen-title">레이블 계약서</h1>
         <p className="lede">
           이름값은 {state.reputation}이다. {offers.length ? '이름이 닿는 곳만 계약서를 들고 온다.' : '아직 전화는 없다. 무명으로 본다.'}

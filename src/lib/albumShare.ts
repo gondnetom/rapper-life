@@ -1,13 +1,14 @@
 import { loadCover } from '../audio/covers'
-import { GENRE_LABEL } from '../game/content'
+import { genreShow } from '../game/content'
 import { signatureLine } from '../game/lyricsScore'
+import { smtmCoverBlob } from './smtmCover'
 import type { Genre, Track } from '../game/types'
 
 const GENRE_COLOR: Record<Genre, string> = {
   boomBap: '#c4a574',
   trap: '#1db954',
-  mumble: '#8d7cff',
   rage: '#ff4d4d',
+  drill: '#e0a21a',
 }
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, max: number, lineHeight: number, limit = Infinity) {
@@ -117,7 +118,7 @@ export async function paintAlbumCard(opts: {
 
   ctx.fillStyle = '#9a9a9a'
   ctx.font = '500 28px Pretendard, Malgun Gothic, sans-serif'
-  ctx.fillText(`${opts.rapName} · ${GENRE_LABEL[opts.genre]}`, 72, y + 132)
+  ctx.fillText(`${opts.rapName} · ${genreShow(opts.genre)}`, 72, y + 132)
 
   const height = Math.max(1560, y + 180)
   const canvas = document.createElement('canvas')
@@ -134,39 +135,90 @@ function fileBase(rapName: string, title: string) {
   return raw.slice(0, 60) || 'album'
 }
 
-function download(blob: Blob, name: string) {
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = name
-  link.click()
-  URL.revokeObjectURL(url)
+export function downloadFiles(files: File[]) {
+  const urls: string[] = []
+  for (const file of files) {
+    const url = URL.createObjectURL(file)
+    urls.push(url)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = file.name
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+  }
+  window.setTimeout(() => {
+    for (const url of urls) URL.revokeObjectURL(url)
+  }, 4000)
+}
+
+async function offerFiles(files: File[], title: string): Promise<'shared' | 'saved' | 'abort'> {
+  const shareData = { files, title }
+  if (navigator.canShare?.(shareData)) {
+    try {
+      await Promise.race([
+        navigator.share(shareData),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('share-timeout')), 1500)),
+      ])
+      return 'shared'
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return 'abort'
+    }
+  }
+  downloadFiles(files)
+  return 'saved'
 }
 
 export async function shareAlbum(track: Track, rapName: string): Promise<string> {
+  const files = await trackImages([track], rapName)
+  if (!files.length) return '이미지 제작에 실패했다.'
+  const result = await offerFiles(files, `${rapName} - ${track.title}`)
+  if (result === 'abort') return ''
+  return result === 'shared' ? '공유 창이 열렸다.' : '커버를 저장했다.'
+}
+
+export async function shareTracks(tracks: Track[], rapName: string): Promise<string> {
+  const files = await trackImages(tracks, rapName)
+  if (!files.length) return '저장할 곡이 없다.'
+  const result = await offerFiles(files, `${rapName} 앨범`)
+  if (result === 'abort') return ''
+  return result === 'shared' ? `곡 ${files.length}장을 공유 창에 올렸다.` : `곡 ${files.length}장을 저장했다.`
+}
+
+async function trackImages(tracks: Track[], rapName: string) {
   await Promise.race([document.fonts.ready, new Promise((resolve) => setTimeout(resolve, 1200))])
-  const cover = track.coverId ? await loadCover(track.coverId) : null
-  const image = await paintAlbumCard({
-    rapName,
-    title: track.title,
-    genre: track.genre,
-    score: track.score,
-    rhythmMark: track.rhythmMark,
-    lyrics: track.lyrics,
-    cover,
-  })
-  if (!image) return '이미지 제작에 실패했다.'
-  const base = fileBase(rapName, track.title)
-  const imageFile = new File([image], `${base}.png`, { type: 'image/png' })
-  const payload = { files: [imageFile], title: `${rapName} - ${track.title}`, text: signatureLine(track.lyrics) }
-  if (navigator.canShare?.(payload)) {
+  const files: File[] = []
+  const used = new Set<string>()
+  for (const track of tracks) {
+    let cover: Blob | null = null
     try {
-      await navigator.share(payload)
-      return '공유 창이 열렸다.'
-    } catch (error) {
-      if (error instanceof DOMException && error.name === 'AbortError') return ''
+      cover = track.source === 'smtm'
+        ? await smtmCoverBlob({ rapName, title: track.title })
+        : track.coverId
+          ? await loadCover(track.coverId)
+          : null
+    } catch {
+      cover = null
     }
+    const image = await paintAlbumCard({
+      rapName,
+      title: track.title,
+      genre: track.genre,
+      score: track.score,
+      rhythmMark: track.rhythmMark,
+      lyrics: track.lyrics,
+      cover,
+    })
+    if (!image) continue
+    const prefix = track.source === 'smtm' ? '쇼미' : '곡'
+    let base = fileBase(rapName, `${prefix}-${track.title}`)
+    if (used.has(base)) {
+      let n = 2
+      while (used.has(`${base}-${n}`)) n += 1
+      base = `${base}-${n}`
+    }
+    used.add(base)
+    files.push(new File([image], `${base}.png`, { type: 'image/png' }))
   }
-  download(image, imageFile.name)
-  return '커버를 저장했다.'
+  return files
 }

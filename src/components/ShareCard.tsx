@@ -1,8 +1,6 @@
 import { useState } from 'react'
-import { loadCover } from '../audio/covers'
-import { paintAlbumCard } from '../lib/albumShare'
 import { describeCareer, smtmCareerLabel } from '../game/archetype'
-import { BRIEF_ACTIONS, GENRE_LABEL, ORIGINS, PHASES, groupTimeline } from '../game/content'
+import { BRIEF_ACTIONS, PHASES, genreShow, groupTimeline } from '../game/content'
 import { euro, formatRep, formatWon, statLabel, topStat } from '../game/format'
 import { signatureLine } from '../game/lyricsScore'
 import type { GameState, Genre } from '../game/types'
@@ -10,8 +8,8 @@ import type { GameState, Genre } from '../game/types'
 const GENRE_COLOR: Record<string, string> = {
   boomBap: '#c4a574',
   trap: '#1db954',
-  mumble: '#8d7cff',
   rage: '#ff4d4d',
+  drill: '#e0a21a',
 }
 
 function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, max: number, lineHeight: number) {
@@ -29,6 +27,35 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number,
   }
   if (line) ctx.fillText(line, x, cursor)
   return cursor + lineHeight
+}
+
+function paintPills(
+  ctx: CanvasRenderingContext2D,
+  pills: { text: string; bg: string; fg: string }[],
+  x: number,
+  y: number,
+) {
+  if (!pills.length) return y
+  ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
+  let cursor = x
+  const height = 48
+  for (const pill of pills) {
+    const width = Math.ceil(ctx.measureText(pill.text).width) + 32
+    const radius = 24
+    ctx.beginPath()
+    ctx.moveTo(cursor + radius, y)
+    ctx.arcTo(cursor + width, y, cursor + width, y + height, radius)
+    ctx.arcTo(cursor + width, y + height, cursor, y + height, radius)
+    ctx.arcTo(cursor, y + height, cursor, y, radius)
+    ctx.arcTo(cursor, y, cursor + width, y, radius)
+    ctx.closePath()
+    ctx.fillStyle = pill.bg
+    ctx.fill()
+    ctx.fillStyle = pill.fg
+    ctx.fillText(pill.text, cursor + 16, y + 33)
+    cursor += width + 14
+  }
+  return y + 68
 }
 
 function careerGroups(state: GameState) {
@@ -82,12 +109,9 @@ function affiliation(state: GameState) {
 }
 
 function biography(state: GameState): string[] {
-  const origin = ORIGINS.find((item) => item.id === state.originId)
   const lines: string[] = []
   if (state.originStory.trim()) lines.push(state.originStory.trim())
-  else if (origin && state.genre) {
-    lines.push(`${origin.place}에서 시작했다. 주력 장르는 ${GENRE_LABEL[origin.genre]}이다.`)
-  }
+  else if (state.genre) lines.push(`주력은 ${genreShow(state.genre)}이다.`)
   if (state.ownLabel) lines.push(`${state.labelName ?? '자기 레이블'} 간판은 직접 달았다.`)
   else if (state.signedLabel) lines.push(`${state.labelName ?? '레이블'} 소속이다.`)
   else lines.push('소속사 없이 인디로 활동했다.')
@@ -95,6 +119,7 @@ function biography(state: GameState): string[] {
     `${showMeLine(state)} 통장에는 ${formatWon(state.money)}이 있고, 이름값은 ${formatRep(state.reputation)}이다. 제일 잘한 건 ${statLabel(topStat(state.stats))}이다.`,
   )
   if (state.snakeTag) lines.push('쇼미 출연과 그 욕이 같이 남아서, 레이블 옆에 뱀새끼가 붙었다.')
+  if (state.nepotismTag) lines.push('원래는 통과 못 하는데 이름값으로 통과해서, 인맥힙합 딱지가 붙었다.')
   return lines
 }
 
@@ -154,8 +179,8 @@ function paintHistory(
 
 function paintPoster(state: GameState) {
   const career = describeCareer(state)
-  const origin = ORIGINS.find((item) => item.id === state.originId)
   const styles = phaseStyles(state)
+  const quotes = state.tracks
   const footerReserve = 72
   const scratch = document.createElement('canvas')
   scratch.width = 1080
@@ -180,10 +205,8 @@ function paintPoster(state: GameState) {
   ctx.font = '400 32px Pretendard, Malgun Gothic, sans-serif'
   y = wrap(ctx, career.blurb, 72, y, 936, 46)
   const chips = [
-    state.genre ? GENRE_LABEL[state.genre] : '',
-    origin?.place ?? '',
+    state.genre ? genreShow(state.genre) : '',
     affiliation(state),
-    state.snakeTag ? '뱀새끼' : '',
     `잔고 ${formatWon(state.money)}`,
     `이름값 ${formatRep(state.reputation)}`,
     smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk),
@@ -191,6 +214,15 @@ function paintPoster(state: GameState) {
   ctx.fillStyle = '#ffffff'
   ctx.font = '700 28px Pretendard, Malgun Gothic, sans-serif'
   y = wrap(ctx, chips.join('  ·  '), 72, y + 8, 936, 42)
+  y = paintPills(
+    ctx,
+    [
+      ...(state.snakeTag ? [{ text: '뱀새끼', bg: '#5a1515', fg: '#ffd0d0' }] : []),
+      ...(state.nepotismTag ? [{ text: '인맥힙합', bg: '#3a2a08', fg: '#ffd56a' }] : []),
+    ],
+    72,
+    y,
+  )
 
   ctx.fillStyle = color
   ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
@@ -213,37 +245,39 @@ function paintPoster(state: GameState) {
     ctx.fillText(row.name, 96, y + 36)
     ctx.fillStyle = color
     ctx.font = '800 26px Pretendard, Malgun Gothic, sans-serif'
-    const label = GENRE_LABEL[row.genre]
+    const label = genreShow(row.genre)
     ctx.fillText(label, 984 - ctx.measureText(label).width, y + 36)
     y += 68
   }
   y += 8
 
-  ctx.fillStyle = color
-  ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
-  ctx.fillText('대표 가사', 72, y + 28)
-  y += 52
-  state.tracks.forEach((track, index) => {
-    const quote = signatureLine(track.lyrics)
-    ctx.fillStyle = '#1b1b1b'
-    ctx.fillRect(72, y, 936, 150)
+  if (quotes.length) {
     ctx.fillStyle = color
-    ctx.fillRect(72, y, 12, 150)
-    ctx.fillStyle = '#ffffff'
-    ctx.font = '700 32px Pretendard, Malgun Gothic, sans-serif'
-    ctx.fillText(`${index + 1}  ${track.title}`, 104, y + 42)
-    ctx.fillStyle = '#9a9a9a'
-    ctx.font = '400 24px Pretendard, Malgun Gothic, sans-serif'
-    ctx.fillText(
-      `${PHASES[track.phase]?.name ?? ''} · ${GENRE_LABEL[track.genre]} · ${track.score}점 · 리드머 ${track.rhythmMark.toFixed(1)}/5.0`,
-      104,
-      y + 78,
-    )
-    ctx.fillStyle = '#ffffff'
-    ctx.font = '500 26px Pretendard, Malgun Gothic, sans-serif'
-    ctx.fillText(quote ? `“${quote.length > 28 ? `${quote.slice(0, 28)}…` : quote}”` : '', 104, y + 118)
-    y += 166
-  })
+    ctx.font = '800 28px Pretendard, Malgun Gothic, sans-serif'
+    ctx.fillText('대표 가사', 72, y + 28)
+    y += 52
+    quotes.forEach((track, index) => {
+      const quote = signatureLine(track.lyrics)
+      ctx.fillStyle = '#1b1b1b'
+      ctx.fillRect(72, y, 936, 150)
+      ctx.fillStyle = color
+      ctx.fillRect(72, y, 12, 150)
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '700 32px Pretendard, Malgun Gothic, sans-serif'
+      ctx.fillText(`${index + 1}  ${track.title}`, 104, y + 42)
+      ctx.fillStyle = '#9a9a9a'
+      ctx.font = '400 24px Pretendard, Malgun Gothic, sans-serif'
+      ctx.fillText(
+        `${track.source === 'smtm' ? '쇼미 · ' : ''}${PHASES[track.phase]?.name ?? ''} · ${genreShow(track.genre)} · ${track.score}점 · 리드머 ${track.rhythmMark.toFixed(1)}/5.0`,
+        104,
+        y + 78,
+      )
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '500 26px Pretendard, Malgun Gothic, sans-serif'
+      ctx.fillText(quote ? `“${quote.length > 28 ? `${quote.slice(0, 28)}…` : quote}”` : '', 104, y + 118)
+      y += 166
+    })
+  }
 
   const seasons = smtmSeasonCards(state)
   if (seasons.length) {
@@ -358,11 +392,11 @@ function PhaseLogs({
 
 export function ShareCard({ state }: { state: GameState }) {
   const career = describeCareer(state)
-  const origin = ORIGINS.find((item) => item.id === state.originId)
   const [status, setStatus] = useState('')
   const bio = biography(state)
   const styles = phaseStyles(state)
   const history = careerGroups(state)
+  const quotes = state.tracks
 
   async function save() {
     await Promise.race([document.fonts.ready, new Promise((resolve) => setTimeout(resolve, 1200))])
@@ -380,39 +414,6 @@ export function ShareCard({ state }: { state: GameState }) {
       files.push(new File([logBlob], `${safePart(state.rapName)}-약력.png`, { type: 'image/png' }))
       parts.push('약력')
     }
-
-    const used = new Set<string>()
-    let trackCount = 0
-    for (const track of state.tracks) {
-      let cover: Blob | null = null
-      if (track.coverId) {
-        try {
-          cover = await loadCover(track.coverId)
-        } catch {
-          cover = null
-        }
-      }
-      const image = await paintAlbumCard({
-        rapName: state.rapName,
-        title: track.title,
-        genre: track.genre,
-        score: track.score,
-        rhythmMark: track.rhythmMark,
-        lyrics: track.lyrics,
-        cover,
-      })
-      if (!image) continue
-      let base = `${safePart(state.rapName)}-곡-${safePart(track.title)}`
-      if (used.has(base)) {
-        let n = 2
-        while (used.has(`${base}-${n}`)) n += 1
-        base = `${base}-${n}`
-      }
-      used.add(base)
-      files.push(new File([image], `${base}.png`, { type: 'image/png' }))
-      trackCount += 1
-    }
-    if (trackCount) parts.push(`곡 ${trackCount}장`)
 
     if (!files.length) return
 
@@ -434,13 +435,15 @@ export function ShareCard({ state }: { state: GameState }) {
   }
 
   const color = state.genre ? GENRE_COLOR[state.genre] : '#1db954'
-  const labelText = affiliation(state)
-  const chipHead = [state.genre ? GENRE_LABEL[state.genre] : '', origin?.place ?? '', labelText].filter(Boolean).join('  ·  ')
-  const chipTail = [
+  const chips = [
+    state.genre ? genreShow(state.genre) : '',
+    affiliation(state),
     `잔고 ${formatWon(state.money)}`,
     `이름값 ${formatRep(state.reputation)}`,
     smtmCareerLabel(state.smtmBestClears, state.smtmTrashTalk),
-  ].filter(Boolean).join('  ·  ')
+  ]
+    .filter(Boolean)
+    .join('  ·  ')
 
   return (
     <section>
@@ -455,11 +458,13 @@ export function ShareCard({ state }: { state: GameState }) {
             {career.title}
           </div>
           <p className="blurb">{career.blurb}</p>
-          <p className="chip-line">
-            {chipHead}
-            {state.snakeTag ? <span className="snake-mark">뱀새끼</span> : null}
-            {chipTail ? `  ·  ${chipTail}` : ''}
-          </p>
+          {chips ? <p className="chip-line">{chips}</p> : null}
+          {(state.snakeTag || state.nepotismTag) && (
+            <div className="poster-marks">
+              {state.snakeTag ? <span className="snake-mark">뱀새끼</span> : null}
+              {state.nepotismTag ? <span className="nepo-mark">인맥힙합</span> : null}
+            </div>
+          )}
           <h3 style={{ color }}>커리어</h3>
           {bio.map((line) => (
             <p className="bio-line" key={line}>
@@ -470,21 +475,26 @@ export function ShareCard({ state }: { state: GameState }) {
           {styles.map((row) => (
             <p className="style-line" key={row.phase}>
               <b>{row.name}</b>
-              <span style={{ color }}>{GENRE_LABEL[row.genre]}</span>
+              <span style={{ color }}>{genreShow(row.genre)}</span>
             </p>
           ))}
-          <h3 style={{ color }}>대표 가사</h3>
-          {state.tracks.map((track, index) => (
-            <div className="line-row" key={track.id} style={{ borderLeftColor: color }}>
-              <strong>
-                {index + 1} {track.title}
-              </strong>
-              <span>
-                {PHASES[track.phase]?.name} · {GENRE_LABEL[track.genre]} · {track.score}점 · 리드머 {track.rhythmMark.toFixed(1)}/5.0
-              </span>
-              <em>“{signatureLine(track.lyrics)}”</em>
-            </div>
-          ))}
+          {quotes.length > 0 && (
+            <>
+              <h3 style={{ color }}>대표 가사</h3>
+              {quotes.map((track, index) => (
+                <div className="line-row" key={track.id} style={{ borderLeftColor: color }}>
+                  <strong>
+                    {index + 1} {track.title}
+                  </strong>
+                  <span>
+                    {track.source === 'smtm' ? '쇼미 · ' : ''}
+                    {PHASES[track.phase]?.name} · {genreShow(track.genre)} · {track.score}점 · 리드머 {track.rhythmMark.toFixed(1)}/5.0
+                  </span>
+                  <em>“{signatureLine(track.lyrics)}”</em>
+                </div>
+              ))}
+            </>
+          )}
           {smtmSeasonCards(state).length > 0 && (
             <>
               <h3 style={{ color }}>쇼미</h3>

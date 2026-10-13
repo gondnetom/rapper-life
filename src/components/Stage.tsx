@@ -38,7 +38,14 @@ export function Stage({
     if (done.current || discarded.current) return
     done.current = true
     if (mode === 'smtm') {
-      dispatch({ type: 'finish-smtm', result })
+      const audioId = result.blob && result.blob.size > 0 ? uid() : null
+      if (audioId && result.blob) {
+        void saveTake(audioId, result.blob)
+          .then(() => dispatch({ type: 'finish-smtm', result, audioId }))
+          .catch(() => dispatch({ type: 'finish-smtm', result, audioId: null }))
+        return
+      }
+      dispatch({ type: 'finish-smtm', result, audioId: null })
       return
     }
     const audioId = result.blob && result.blob.size > 0 ? uid() : null

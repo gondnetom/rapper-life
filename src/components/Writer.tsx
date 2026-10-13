@@ -96,6 +96,7 @@ export function Writer({
               ? `짧은 벌스 ${target}줄이다. 줄 끝 모음을 맞추면 라임 점수가 오른다.`
               : `한 곡은 ${target}줄이다. 음절은 고르게, 줄 끝 모음은 맞춰라.`}
       </p>
+      {mode === 'smtm' && <p className="note">표지는 쇼미 스타일로 붙는다.</p>}
       <div className="stack">
         {mode === 'release' && (
           <>

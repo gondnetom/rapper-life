@@ -1,10 +1,10 @@
-import { DISS_OPPONENTS, GENRE_LABEL, ORIGINS, PHASES, PRODUCERS, TRAIN_ACTIONS, hipgalLines, labelOffers, rhythmLines, trainNotice, trashReactions } from './content'
+import { DISS_OPPONENTS, GENRE_LABEL, PHASES, PRODUCERS, genreStart, hipgalLines, labelOffers, rhythmLines, trainActions, trainNotice, trashReactions } from './content'
 import { payScale, releasePayout } from './economy'
 import { forcedEvent, rollTrainingEvent, shiftModal, shiftSwing } from './events'
 import { capRep, capStat, eul, eun, euro, formatWon, isRapName, rhythmMark, statLabel, uid, wa } from './format'
 import { scoreLyrics } from './lyricsScore'
 import { freshState } from './storage'
-import { SMTM_ROUNDS, buildYoutube, rivalPower, roundPassed, smtmSeasonLabel } from './smtm'
+import { SMTM_ROUNDS, buildYoutube, nepotismPass, rivalPower, roundPassed, smtmSeasonLabel } from './smtm'
 import { pickBeat } from '../audio/beats'
 import type { GameState, Genre, PerformResult, StatKey, TimelineItem, TrainId, YoutubeResult } from './types'
 
@@ -29,7 +29,7 @@ export type Action =
   | { type: 'smtm-trash' }
   | { type: 'smtm-team'; id: string }
   | { type: 'submit-smtm' }
-  | { type: 'finish-smtm'; result: PerformResult; skipped?: boolean }
+  | { type: 'finish-smtm'; result: PerformResult; skipped?: boolean; audioId?: string | null }
   | { type: 'ack-youtube' }
   | { type: 'set-tab'; tab: GameState['tab'] }
   | { type: 'set-beat'; on: boolean }
@@ -213,17 +213,17 @@ function reduce(state: GameState, action: Action): GameState {
       return { ...state, rapName: name, screen: 'origin' }
     }
     case 'pick-origin': {
-      const origin = ORIGINS.find((item) => item.id === action.id)
-      if (!origin) return state
+      const start = genreStart(action.id)
+      if (!start) return state
       return {
         ...state,
-        originId: origin.id,
-        genre: origin.genre,
-        stats: { ...origin.stats },
+        originId: start.genre,
+        genre: start.genre,
+        stats: { ...start.stats },
         money: 40_000,
         reputation: 8,
         screen: 'story',
-        originStory: origin.story.replaceAll('{name}', eun(state.rapName)),
+        originStory: start.story.replaceAll('{name}', eun(state.rapName)),
         timeline: [],
       }
     }
@@ -248,10 +248,10 @@ function reduce(state: GameState, action: Action): GameState {
       }
     case 'train': {
       if (state.modal || state.screen !== 'train' || state.actionsLeft <= 0) return state
-      const spec = TRAIN_ACTIONS.find((item) => item.id === action.id)
+      const spec = trainActions(state.phase).find((item) => item.id === action.id)
       if (!spec) return state
       if (action.id === 'tonic') {
-        const hit = Math.random() < 2 / 3
+        const hit = Math.random() < 0.6
         if (!hit) {
           const detail = trainNotice('tonic', false)
           return endCareer(state, detail, '보약', detail)
@@ -300,10 +300,10 @@ function reduce(state: GameState, action: Action): GameState {
         money,
         reputation,
         actionsLeft: state.actionsLeft - 1,
-        notice: [trainNotice(action.id, ok), resultLine(state, stats, money, reputation)].filter(Boolean).join('\n'),
+        notice: [trainNotice(action.id, ok, state.phase), resultLine(state, stats, money, reputation)].filter(Boolean).join('\n'),
         timeline: [
           ...state.timeline,
-          line(state, spec.label, [trainNotice(action.id, ok), resultLine(state, stats, money, reputation)].filter(Boolean).join(' ')),
+          line(state, spec.label, [trainNotice(action.id, ok, state.phase), resultLine(state, stats, money, reputation)].filter(Boolean).join(' ')),
         ],
       }
       let event = rollTrainingEvent(next)
@@ -364,6 +364,7 @@ function reduce(state: GameState, action: Action): GameState {
         coverId: state.draftCoverId,
         money: payout.moneyGain,
         shift,
+        source: 'release' as const,
       }
       const shiftDetail =
         shift === 'boom' ? '노선을 바꿨더니 반응이 좋았다.' : shift === 'bust' ? '노선을 바꿨더니 반응이 별로였다.' : '곡을 냈다.'
@@ -394,7 +395,7 @@ function reduce(state: GameState, action: Action): GameState {
             ownLabel: false,
             labelName: null,
             notice: '계약을 거절하고, 인디로 전성기에 들어갔다.',
-            timeline: [...state.timeline, line(state, '인디', '신입이 끝나고 소속 없이 넘어갔다.')],
+            timeline: [...state.timeline, line(state, '인디', '초창기가 끝나고 소속 없이 넘어갔다.')],
           },
           1,
         )
@@ -565,6 +566,7 @@ function reduce(state: GameState, action: Action): GameState {
       judgement -= state.snakeTag ? 4 : 0
       const rival = round.kind === 'diss' ? rivalPower(state.phase) : null
       const passed = roundPassed(state.smtmRound, judgement, rival ?? 0, state.reputation)
+      const nepotism = passed && nepotismPass(state.smtmRound, judgement, rival ?? 0, state.reputation)
       const gig = passed ? scalePay(state, round.gig) : 0
       const prize = passed ? round.prize : 0
       const earned = state.smtmEarned + gig + prize
@@ -588,7 +590,30 @@ function reduce(state: GameState, action: Action): GameState {
         gig,
         ripple: passed ? round.ripple : 0,
         prize,
+        nepotism,
       })
+      const lyrics = state.draftLyrics.trim()
+      const smtmTrack = lyrics && /[가-힣]/.test(lyrics) && state.genre
+        ? {
+            id: uid(),
+            phase: state.phase,
+            title: `${PHASES[state.phase]?.name ?? ''} ${round.name}`.trim(),
+            lyrics,
+            genre: state.genre,
+            score: Math.round(judged.score),
+            writingScore: Math.round(judged.writing),
+            performScore: Math.round(judged.perform),
+            hipgal: hipgalLines(state.rapName, judged.score, null, state.snakeTag, state.genre),
+            rhythm: rhythmLines(judged.writing, null),
+            rhythmMark: rhythmMark(judged.writing),
+            audioId: action.audioId ?? null,
+            beatId: state.beatId,
+            coverId: null,
+            money: gig + prize,
+            shift: null,
+            source: 'smtm' as const,
+          }
+        : null
       return {
         ...state,
         money: state.money + gig + prize,
@@ -599,13 +624,15 @@ function reduce(state: GameState, action: Action): GameState {
         lastYoutube: youtube,
         smtmLog: pushSmtm(state, youtube),
         lastPerformNote: judged.note,
+        nepotismTag: state.nepotismTag || nepotism,
+        tracks: smtmTrack ? [...state.tracks, smtmTrack] : state.tracks,
         screen: 'smtmYoutube',
         tab: 'now',
         timeline:
           round.kind === 'diss' && state.smtmOpponent
             ? [
                 ...state.timeline,
-                line(state, '디스전', `${wa(state.smtmOpponent)} 맞장을 했다. ${passed ? '이겼다.' : '밀렸다.'}`),
+                line(state, '디스전', `${wa(state.smtmOpponent)} 디스를 했다. ${passed ? '이겼다.' : '밀렸다.'}`),
               ]
             : state.timeline,
       }
@@ -687,7 +714,7 @@ function resolveEvent(state: GameState, choice: string): GameState {
       notice: `${euro(GENRE_LABEL[nextGenre])} 노선을 바꿨다. 다음 곡에서 반응이 갈린다.`,
       timeline: [
         ...state.timeline,
-        line(state, '노선 변경', `${GENRE_LABEL[state.genre]}에서 ${GENRE_LABEL[nextGenre]}로 옮겼다.`),
+        line(state, '노선 변경', `${GENRE_LABEL[state.genre]}에서 ${euro(GENRE_LABEL[nextGenre])} 옮겼다.`),
       ],
     }
   }
@@ -750,8 +777,8 @@ function resolveEvent(state: GameState, choice: string): GameState {
         ...state,
         modal: null,
         reputation: capRep(state.reputation - 1),
-        notice: '맞장을 피했다. 겁먹었다는 소문이 남았다.',
-        timeline: [...state.timeline, line(state, '맞장 회피', `${state.rivalName}의 콜을 무시했다. 겁먹었다는 글이 올라왔다.`)],
+        notice: '디스를 피했다. 겁먹었다는 소문이 남았다.',
+        timeline: [...state.timeline, line(state, '디스 회피', `${state.rivalName}의 콜을 무시했다. 겁먹었다는 글이 올라왔다.`)],
       }
     }
     const power = (state.stats.lyric + state.stats.club) / 2 + Math.random() * 22
@@ -768,7 +795,7 @@ function resolveEvent(state: GameState, choice: string): GameState {
           ...state.timeline,
           line(
             state,
-            win ? `${state.rivalName} 맞장 승` : `${state.rivalName} 맞장 패`,
+            win ? `${state.rivalName} 디스 승` : `${state.rivalName} 디스 패`,
             win ? `${eul(state.rivalName)} 눌렀다. 뒤풀이 라이브로 ${formatWon(pay)}을 받았다.` : `${state.rivalName}에게 밀렸다.`,
           ),
         ],

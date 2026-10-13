@@ -37,11 +37,12 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
     return (
       <section>
         <div className="youtube">
-          <p className="kicker">{clip.passed ? 'PASS' : 'DROP'}</p>
+          <p className="kicker">{clip.passed ? (clip.nepotism ? '인맥힙합' : 'PASS') : 'DROP'}</p>
           <h1 className="yt-title">
             {state.rapName} {clip.roundName}
             {round.kind === 'diss' && clip.rivalName ? ` vs ${clip.rivalName}` : ''}
           </h1>
+          {clip.nepotism ? <span className="nepo-mark">인맥힙합</span> : null}
           <p className="producer">
             <b>{clip.producer}</b>
             <span>{clip.producerLine}</span>
@@ -93,8 +94,8 @@ export function Smtm({ state, dispatch }: { state: GameState; dispatch: Dispatch
         {state.smtmTrashTalk
           ? '예전에 쇼미 나가면 구리다고 욕해 놨다. 지금 나가면 그 표시가 레이블 옆에 붙는다.'
           : state.smtmAppeared
-            ? '예전에 쇼미에 나갔다. 지금 구리다고 욕하면 뱀새끼가 레이블 옆에 붙는다. 순서는 상관없다.'
-            : '파이널 상금은 10억이다. 라운드를 넘기면 파급이 붙고, 이름값이 높으면 다음 단계가 쉽다. 인맥 힙합이다.'}
+            ? '예전에 쇼미에 나갔다. 지금 구리다고 욕하면 뱀새끼가 레이블 옆에 붙는다.'
+            : '파이널 상금은 10억이다. 라운드를 넘기면 파급효과가 붙고, 이름값이 높으면 다음 단계가 쉽다. 인맥 힙합이다.'}
       </p>
       <div className="stack">
         {SMTM_ROUNDS.map((round, index) => (

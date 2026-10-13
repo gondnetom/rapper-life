@@ -1,4 +1,4 @@
-import { GENRES, GENRE_LABEL, PHASES, TRAIN_ACTIONS } from '../game/content'
+import { GENRES, GENRE_LABEL, PHASES, trainActions } from '../game/content'
 import { euro, statLabel, VISIBLE_STATS } from '../game/format'
 import type { GameState } from '../game/types'
 import type { Dispatch } from '../game/reducer'
@@ -29,7 +29,7 @@ export function Training({ state, dispatch }: { state: GameState; dispatch: Disp
         ))}
       </div>
       <div className="actions">
-        {TRAIN_ACTIONS.map((action) => (
+        {trainActions(state.phase).map((action) => (
           <button
             className={action.id === 'tonic' ? 'action risk' : 'action'}
             key={action.id}
@@ -94,7 +94,7 @@ export function EventSheet({ state, dispatch }: { state: GameState; dispatch: Di
           {modal.kind === 'diss' && (
             <>
               <button className="btn btn-wide" type="button" onClick={() => dispatch({ type: 'resolve-event', choice: 'fight' })}>
-                맞장 받는다
+                디스 받는다
               </button>
               <button className="btn-secondary btn-wide" type="button" onClick={() => dispatch({ type: 'resolve-event', choice: 'pass' })}>
                 겁나서 피한다

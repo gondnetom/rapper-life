@@ -47,8 +47,8 @@ function dissEvent(): ModalEvent {
   return {
     id: uid(),
     kind: 'diss',
-    title: `${foe.name} 맞장`,
-    body: `${foe.name}의 말이다. "${foe.line}" 받으면 맞장이고, 피하면 겁먹었다는 글이 남는다.`,
+    title: `${foe.name} 디스`,
+    body: `${foe.name}의 말이다. "${foe.line}" 받으면 디스고, 피하면 겁먹었다는 글이 남는다.`,
     rep: 0,
     money: 0,
     rivalName: foe.name,
@@ -85,7 +85,7 @@ export function shiftModal(genre: Genre): ModalEvent {
     id: uid(),
     kind: 'shift',
     title: '노선 변경',
-    body: `${GENRE_LABEL[genre]}에 질렸다. 노선을 바꾸면 다음 곡 반응이 좋거나 별로다. 이름이 클수록 차이가 크고, 하던 장르를 유지할 수도 있다.`,
+    body: `${GENRE_LABEL[genre]} 노선에 질렸다. 노선을 바꾸면 다음 곡 반응이 좋거나 별로다. 이름이 클수록 차이가 크고, 하던 장르를 유지할 수도 있다.`,
     rep: 0,
     money: 0,
   }

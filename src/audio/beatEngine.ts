@@ -37,17 +37,6 @@ const PATTERNS: Record<Genre, Pattern> = {
     bassDur: 0.46,
     rage: false,
   },
-  mumble: {
-    bpm: 100,
-    swing: 0,
-    kick: [0, 10],
-    snare: [8],
-    hat: [2, 6, 10, 14],
-    bass: [0],
-    bassFreq: 36,
-    bassDur: 0.7,
-    rage: false,
-  },
   rage: {
     bpm: 148,
     swing: 0,
@@ -58,6 +47,17 @@ const PATTERNS: Record<Genre, Pattern> = {
     bassFreq: 46,
     bassDur: 0.22,
     rage: true,
+  },
+  drill: {
+    bpm: 142,
+    swing: 0,
+    kick: [0, 3, 8, 10],
+    snare: [4, 12],
+    hat: [0, 2, 3, 6, 8, 10, 11, 14],
+    bass: [0, 8, 10],
+    bassFreq: 38,
+    bassDur: 0.4,
+    rage: false,
   },
 }
 

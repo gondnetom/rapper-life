@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { beatCredit } from '../audio/beats'
 import { playNotice } from '../audio/uiSound'
-import { GENRE_LABEL, PHASES } from '../game/content'
+import { genreShow, PHASES } from '../game/content'
 import { isAcapellaScreen } from '../game/smtm'
 import { formatRep, formatWon } from '../game/format'
 import type { GameState } from '../game/types'
@@ -61,11 +61,12 @@ export function Shell({
           </div>
           <p className="top-meta">
             잔고 {formatWon(state.money)} · 이름값 {formatRep(state.reputation)}
-            {state.genre ? ` · ${GENRE_LABEL[state.genre]}` : ''}
+            {state.genre ? ` · ${genreShow(state.genre)}` : ''}
           </p>
           <div className="badges">
             {state.signedLabel && <span className="badge">{state.labelName ?? '레이블'}</span>}
             {state.snakeTag && <span className="snake-mark">뱀새끼</span>}
+            {state.nepotismTag && <span className="nepo-mark">인맥힙합</span>}
             {state.pendingShift && <span className="badge">노선 변경 대기</span>}
           </div>
         </header>
@@ -74,7 +75,7 @@ export function Shell({
       {!intro && <Alarm notice={state.notice} tick={state.noticeTick} lift={showPlayer} />}
       {showPlayer && state.genre && (
         <PlayerBar
-          genre={GENRE_LABEL[state.genre]}
+          genre={genreShow(state.genre)}
           credit={state.genre ? beatCredit(state.beatId, state.genre) : ''}
           title={state.draftTitle || '작업 중'}
           on={state.beatOn}
@@ -84,7 +85,7 @@ export function Shell({
       {!intro && (
         <nav className="nav">
           <button className={state.tab === 'now' ? 'on' : ''} onClick={() => dispatch({ type: 'set-tab', tab: 'now' })} type="button">
-            지금
+            홈
           </button>
           <button className={state.tab === 'album' ? 'on' : ''} onClick={() => dispatch({ type: 'set-tab', tab: 'album' })} type="button">
             앨범

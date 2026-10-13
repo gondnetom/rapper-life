@@ -59,13 +59,13 @@ export function describeCareer(state: GameState): { title: string; blurb: string
   if (state.genre === 'rage') {
     return { title: '소리지름 본캐', blurb: `사람들이 기억하는 소리는 ${genre}였다.` }
   }
-  if (state.genre === 'mumble') {
-    return { title: '오토튠 본캐', blurb: '또박또박 부르는 대신 느낌으로 밀었다.' }
-  }
   if (state.genre === 'trap') {
     return { title: '808 본캐', blurb: '808 비트로 이름을 알렸다.' }
   }
-  return { title: '언더 평균', blurb: `${eun(name)} 신입부터 황혼기까지 자기 속도로 버텼다. 제일 잘한 건 ${statLabel(top)}이다.` }
+  if (state.genre === 'drill') {
+    return { title: '드릴 본캐', blurb: '슬라이드 베이스 위에 플로우를 잘라 올렸다.' }
+  }
+  return { title: '언더 평균', blurb: `${eun(name)} 초창기부터 황혼기까지 자기 속도로 버텼다. 제일 잘한 건 ${statLabel(top)}이다.` }
 }
 
 export { smtmCareerLabel }

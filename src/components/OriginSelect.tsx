@@ -1,20 +1,20 @@
-import { GENRE_LABEL, ORIGINS } from '../game/content'
+import { GENRE_LABEL, GENRE_STARTS, genreStart } from '../game/content'
 import type { GameState } from '../game/types'
 import type { Dispatch } from '../game/reducer'
 
 export function OriginSelect({ state, dispatch }: { state: GameState; dispatch: Dispatch }) {
   if (state.screen === 'story') {
-    const origin = ORIGINS.find((item) => item.id === state.originId)
-    if (!origin) return null
+    const start = genreStart(state.originId ?? state.genre)
+    if (!start) return null
     return (
       <section>
-        <h1 className="screen-title">{origin.place}</h1>
+        <h1 className="screen-title">{start.place}</h1>
         <div className="story">
           {state.originStory}
-          <div className="genre-pill">{GENRE_LABEL[origin.genre]}</div>
+          <div className="genre-pill">{GENRE_LABEL[start.genre]}</div>
         </div>
         <button className="btn btn-wide" style={{ marginTop: 16 }} type="button" onClick={() => dispatch({ type: 'ack-story' })}>
-          이 동네에서 시작
+          여기서 시작
         </button>
       </section>
     )
@@ -23,12 +23,14 @@ export function OriginSelect({ state, dispatch }: { state: GameState; dispatch: 
   return (
     <section>
       <h1 className="screen-title">{state.rapName}</h1>
-      <p className="lede">어느 동네에서 시작했는가. 그게 주력 장르가 된다.</p>
+      <p className="lede">어디서 시작할지 고른다. 나중에 노선을 바꿀 수도 있다.</p>
       <div className="stack">
-        {ORIGINS.map((origin) => (
-          <button className="choice" key={origin.id} type="button" onClick={() => dispatch({ type: 'pick-origin', id: origin.id })}>
-            <strong>{origin.place}</strong>
-            <em>{origin.entry} → {GENRE_LABEL[origin.genre]}</em>
+        {GENRE_STARTS.map((start) => (
+          <button className="choice" key={start.genre} type="button" onClick={() => dispatch({ type: 'pick-origin', id: start.genre })}>
+            <strong>{start.place}</strong>
+            <em>
+              {GENRE_LABEL[start.genre]} · {start.entry}
+            </em>
           </button>
         ))}
       </div>

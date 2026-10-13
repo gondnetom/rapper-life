@@ -37,6 +37,11 @@ export function roundPassed(roundIndex: number, judgement: number, rival: number
   return judgement + ease >= round.bar
 }
 
+export function nepotismPass(roundIndex: number, judgement: number, rival: number, reputation: number): boolean {
+  if (SMTM_ROUNDS[roundIndex]?.kind === 'team') return false
+  return roundPassed(roundIndex, judgement, rival, reputation) && !roundPassed(roundIndex, judgement, rival, 0)
+}
+
 export function smtmSeasonLabel(clears: number): string {
   if (clears >= SMTM_ROUNDS.length) return '파이널 우승'
   return `${SMTM_ROUNDS[clears].name} 탈락`
@@ -71,6 +76,7 @@ export function buildYoutube(opts: {
   gig: number
   ripple: number
   prize: number
+  nepotism?: boolean
 }): YoutubeResult {
   const round = SMTM_ROUNDS[opts.roundIndex]
   const producer = producerFor(opts.roundIndex, opts.teamId)
@@ -96,5 +102,6 @@ export function buildYoutube(opts: {
     producer: `${producer.team} · ${producerNames(producer)}`,
     producerLine: producer.meme,
     seasonEarned: opts.seasonEarned,
+    nepotism: Boolean(opts.nepotism),
   }
 }
