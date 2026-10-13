@@ -177,10 +177,14 @@ function paintHistory(
   return y
 }
 
+function topTracks(state: GameState) {
+  return [...state.tracks].sort((a, b) => b.score - a.score).slice(0, 3)
+}
+
 function paintPoster(state: GameState) {
   const career = describeCareer(state)
   const styles = phaseStyles(state)
-  const quotes = state.tracks
+  const quotes = topTracks(state)
   const footerReserve = 72
   const scratch = document.createElement('canvas')
   scratch.width = 1080
@@ -396,7 +400,7 @@ export function ShareCard({ state }: { state: GameState }) {
   const bio = biography(state)
   const styles = phaseStyles(state)
   const history = careerGroups(state)
-  const quotes = state.tracks
+  const quotes = topTracks(state)
 
   async function save() {
     await Promise.race([document.fonts.ready, new Promise((resolve) => setTimeout(resolve, 1200))])

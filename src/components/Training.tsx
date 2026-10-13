@@ -94,7 +94,7 @@ export function EventSheet({ state, dispatch }: { state: GameState; dispatch: Di
           {modal.kind === 'diss' && (
             <>
               <button className="btn btn-wide" type="button" onClick={() => dispatch({ type: 'resolve-event', choice: 'fight' })}>
-                디스 받는다
+                디스를 받는다
               </button>
               <button className="btn-secondary btn-wide" type="button" onClick={() => dispatch({ type: 'resolve-event', choice: 'pass' })}>
                 겁나서 피한다
