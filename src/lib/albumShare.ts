@@ -10,7 +10,7 @@ const GENRE_COLOR: Record<Genre, string> = {
   rage: '#ff4d4d',
 }
 
-function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, max: number, lineHeight: number, limit: number) {
+function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, max: number, lineHeight: number, limit = Infinity) {
   let line = ''
   let cursor = y
   let used = 0
@@ -28,6 +28,18 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number,
   }
   if (line) ctx.fillText(line, x, cursor)
   return cursor + lineHeight
+}
+
+function wrapBlock(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, max: number, lineHeight: number) {
+  let cursor = y
+  for (const part of text.replace(/\r\n/g, '\n').split('\n')) {
+    if (!part.trim()) {
+      cursor += Math.round(lineHeight * 0.55)
+      continue
+    }
+    cursor = wrap(ctx, part.trim(), x, cursor, max, lineHeight)
+  }
+  return cursor
 }
 
 async function drawCover(ctx: CanvasRenderingContext2D, cover: Blob | null, color: string) {
@@ -56,14 +68,14 @@ export async function paintAlbumCard(opts: {
   lyrics: string
   cover: Blob | null
 }): Promise<Blob | null> {
-  const canvas = document.createElement('canvas')
-  canvas.width = 1080
-  canvas.height = 1560
-  const ctx = canvas.getContext('2d')
+  const scratch = document.createElement('canvas')
+  scratch.width = 1080
+  scratch.height = 6400
+  const ctx = scratch.getContext('2d')
   if (!ctx) return null
   const color = GENRE_COLOR[opts.genre]
   ctx.fillStyle = '#101010'
-  ctx.fillRect(0, 0, 1080, 1560)
+  ctx.fillRect(0, 0, 1080, scratch.height)
   await drawCover(ctx, opts.cover, color)
   const shade = ctx.createLinearGradient(0, 860, 0, 1080)
   shade.addColorStop(0, 'rgba(16,16,16,0)')
@@ -76,9 +88,18 @@ export async function paintAlbumCard(opts: {
   let y = wrap(ctx, opts.title, 72, 1160, 936, 76, 2)
 
   const quote = signatureLine(opts.lyrics)
+  const full = opts.lyrics.replace(/\r\n/g, '\n').trim()
   ctx.fillStyle = '#d7d7d7'
   ctx.font = '500 34px Pretendard, Malgun Gothic, sans-serif'
   if (quote) y = wrap(ctx, `“${quote}”`, 72, y + 18, 936, 48, 2)
+  if (full && full !== quote) {
+    ctx.fillStyle = '#8d8d8d'
+    ctx.font = '700 22px Pretendard, Malgun Gothic, sans-serif'
+    ctx.fillText('가사', 72, y + 28)
+    ctx.fillStyle = '#c8c8c8'
+    ctx.font = '400 28px Pretendard, Malgun Gothic, sans-serif'
+    y = wrapBlock(ctx, full, 72, y + 64, 936, 42)
+  }
 
   y += 36
   ctx.fillStyle = '#ffffff'
@@ -96,7 +117,15 @@ export async function paintAlbumCard(opts: {
 
   ctx.fillStyle = '#9a9a9a'
   ctx.font = '500 28px Pretendard, Malgun Gothic, sans-serif'
-  ctx.fillText(`${opts.rapName} · ${GENRE_LABEL[opts.genre]}`, 72, 1500)
+  ctx.fillText(`${opts.rapName} · ${GENRE_LABEL[opts.genre]}`, 72, y + 132)
+
+  const height = Math.max(1560, y + 180)
+  const canvas = document.createElement('canvas')
+  canvas.width = 1080
+  canvas.height = height
+  const out = canvas.getContext('2d')
+  if (!out) return null
+  out.drawImage(scratch, 0, 0, 1080, height, 0, 0, 1080, height)
   return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob), 'image/png'))
 }
 

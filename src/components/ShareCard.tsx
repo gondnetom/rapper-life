@@ -98,10 +98,63 @@ function biography(state: GameState): string[] {
   return lines
 }
 
-function paint(state: GameState) {
+function cropCanvas(scratch: HTMLCanvasElement, y: number, footerReserve: number) {
+  const height = Math.max(1680, y + footerReserve)
+  const canvas = document.createElement('canvas')
+  canvas.width = 1080
+  canvas.height = height
+  const out = canvas.getContext('2d')
+  if (!out) return null
+  out.fillStyle = '#101010'
+  out.fillRect(0, 0, 1080, height)
+  const drawn = Math.min(y, scratch.height)
+  out.drawImage(scratch, 0, 0, 1080, drawn, 0, 0, 1080, drawn)
+  return canvas
+}
+
+function paintHistory(
+  ctx: CanvasRenderingContext2D,
+  history: ReturnType<typeof careerGroups>,
+  color: string,
+  start: number,
+) {
+  let y = start
+  for (const group of history) {
+    ctx.fillStyle = color
+    ctx.font = '800 30px Pretendard, Malgun Gothic, sans-serif'
+    ctx.fillText(group.name, 72, y + 28)
+    y += 48
+    const brief = group.items.filter((item) => BRIEF_ACTIONS.has(item.title))
+    const disses = group.items.filter((item) => isDissTitle(item.title))
+    const full = group.items.filter((item) => !BRIEF_ACTIONS.has(item.title) && !isDissTitle(item.title))
+    if (brief.length) {
+      ctx.fillStyle = '#d7d7d7'
+      ctx.font = '500 26px Pretendard, Malgun Gothic, sans-serif'
+      y = wrap(ctx, brief.map((item) => item.title).join(' · '), 96, y + 8, 900, 40)
+    }
+    if (disses.length) {
+      ctx.fillStyle = '#b3b3b3'
+      ctx.font = '500 24px Pretendard, Malgun Gothic, sans-serif'
+      y = wrap(ctx, disses.map((item) => dissLabel(item.title)).join(' · '), 96, y + 8, 900, 36)
+    }
+    for (const item of full) {
+      ctx.fillStyle = '#1b1b1b'
+      ctx.fillRect(96, y, 912, 70)
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '700 24px Pretendard, Malgun Gothic, sans-serif'
+      ctx.fillText(item.title, 116, y + 28)
+      ctx.fillStyle = '#9a9a9a'
+      ctx.font = '400 20px Pretendard, Malgun Gothic, sans-serif'
+      ctx.fillText(item.detail.length > 46 ? `${item.detail.slice(0, 46)}…` : item.detail, 116, y + 54)
+      y += 80
+    }
+  }
+  return y
+}
+
+function paintPoster(state: GameState) {
   const career = describeCareer(state)
   const origin = ORIGINS.find((item) => item.id === state.originId)
-  const history = careerGroups(state)
   const styles = phaseStyles(state)
   const footerReserve = 72
   const scratch = document.createElement('canvas')
@@ -213,48 +266,32 @@ function paint(state: GameState) {
     y += 8
   }
 
-  for (const group of history) {
-    ctx.fillStyle = color
-    ctx.font = '800 30px Pretendard, Malgun Gothic, sans-serif'
-    ctx.fillText(group.name, 72, y + 28)
-    y += 48
-    const brief = group.items.filter((item) => BRIEF_ACTIONS.has(item.title))
-    const disses = group.items.filter((item) => isDissTitle(item.title))
-    const full = group.items.filter((item) => !BRIEF_ACTIONS.has(item.title) && !isDissTitle(item.title))
-    if (brief.length) {
-      ctx.fillStyle = '#d7d7d7'
-      ctx.font = '500 26px Pretendard, Malgun Gothic, sans-serif'
-      y = wrap(ctx, brief.map((item) => item.title).join(' · '), 96, y + 8, 900, 40)
-    }
-    if (disses.length) {
-      ctx.fillStyle = '#b3b3b3'
-      ctx.font = '500 24px Pretendard, Malgun Gothic, sans-serif'
-      y = wrap(ctx, disses.map((item) => dissLabel(item.title)).join(' · '), 96, y + 8, 900, 36)
-    }
-    for (const item of full) {
-      ctx.fillStyle = '#1b1b1b'
-      ctx.fillRect(96, y, 912, 70)
-      ctx.fillStyle = '#ffffff'
-      ctx.font = '700 24px Pretendard, Malgun Gothic, sans-serif'
-      ctx.fillText(item.title, 116, y + 28)
-      ctx.fillStyle = '#9a9a9a'
-      ctx.font = '400 20px Pretendard, Malgun Gothic, sans-serif'
-      ctx.fillText(item.detail.length > 46 ? `${item.detail.slice(0, 46)}…` : item.detail, 116, y + 54)
-      y += 80
-    }
-  }
+  return cropCanvas(scratch, y, footerReserve)
+}
 
-  const height = Math.max(1680, y + footerReserve)
-  const canvas = document.createElement('canvas')
-  canvas.width = 1080
-  canvas.height = height
-  const out = canvas.getContext('2d')
-  if (!out) return null
-  out.fillStyle = '#101010'
-  out.fillRect(0, 0, 1080, height)
-  const drawn = Math.min(y, scratch.height)
-  out.drawImage(scratch, 0, 0, 1080, drawn, 0, 0, 1080, drawn)
-  return canvas
+function paintLog(state: GameState) {
+  const history = careerGroups(state)
+  if (!history.length) return null
+  const footerReserve = 72
+  const scratch = document.createElement('canvas')
+  scratch.width = 1080
+  scratch.height = 7200
+  const ctx = scratch.getContext('2d')
+  if (!ctx) return null
+  const color = state.genre ? GENRE_COLOR[state.genre] : '#1db954'
+  ctx.fillStyle = '#101010'
+  ctx.fillRect(0, 0, 1080, scratch.height)
+  ctx.fillStyle = color
+  ctx.fillRect(0, 0, 1080, 18)
+  ctx.font = '700 28px Pretendard, Malgun Gothic, sans-serif'
+  ctx.fillText('한국 래퍼의 삶', 72, 110)
+  ctx.fillStyle = '#ffffff'
+  ctx.font = '800 72px Pretendard, Malgun Gothic, sans-serif'
+  ctx.fillText('약력', 72, 210)
+  ctx.fillStyle = '#d0d0d0'
+  ctx.font = '500 32px Pretendard, Malgun Gothic, sans-serif'
+  const y = paintHistory(ctx, history, color, wrap(ctx, state.rapName, 72, 268, 936, 44) + 12)
+  return cropCanvas(scratch, y, footerReserve)
 }
 
 function blobOf(canvas: HTMLCanvasElement) {
@@ -283,9 +320,40 @@ function downloadFiles(files: File[]) {
   }, 4000)
 }
 
-function saveStatus(trackCount: number, shared: boolean) {
-  if (shared) return trackCount === 0 ? '결과표를 공유 창에 올렸다.' : `결과표와 곡 ${trackCount}장을 공유 창에 올렸다.`
-  return trackCount === 0 ? '결과표 1장을 저장했다.' : `결과표 1장, 곡 ${trackCount}장을 저장했다.`
+function saveStatus(parts: string[], shared: boolean) {
+  const list = parts.join(', ')
+  return shared ? `${list}을 공유 창에 올렸다.` : `${list}을 저장했다.`
+}
+
+function PhaseLogs({
+  history,
+  color,
+}: {
+  history: ReturnType<typeof careerGroups>
+  color: string
+}) {
+  return (
+    <>
+      {history.map((group) => {
+        const brief = group.items.filter((item) => BRIEF_ACTIONS.has(item.title))
+        const disses = group.items.filter((item) => isDissTitle(item.title))
+        const full = group.items.filter((item) => !BRIEF_ACTIONS.has(item.title) && !isDissTitle(item.title))
+        return (
+          <div className="phase-log" key={`${group.phase}-${group.items[0]?.id}`}>
+            <b style={{ color }}>{group.name}</b>
+            {brief.length > 0 && <p className="action-brief">{brief.map((item) => item.title).join(' · ')}</p>}
+            {disses.length > 0 && <p className="diss-brief">{disses.map((item) => dissLabel(item.title)).join(' · ')}</p>}
+            {full.map((item) => (
+              <div className="action-row" key={item.id}>
+                <strong>{item.title}</strong>
+                <span>{item.detail}</span>
+              </div>
+            ))}
+          </div>
+        )
+      })}
+    </>
+  )
 }
 
 export function ShareCard({ state }: { state: GameState }) {
@@ -299,9 +367,19 @@ export function ShareCard({ state }: { state: GameState }) {
   async function save() {
     await Promise.race([document.fonts.ready, new Promise((resolve) => setTimeout(resolve, 1200))])
     const files: File[] = []
-    const poster = paint(state)
+    const parts: string[] = []
+    const poster = paintPoster(state)
     const posterBlob = poster ? await blobOf(poster) : null
-    if (posterBlob) files.push(new File([posterBlob], `${safePart(state.rapName)}-결과표.png`, { type: 'image/png' }))
+    if (posterBlob) {
+      files.push(new File([posterBlob], `${safePart(state.rapName)}-결과표.png`, { type: 'image/png' }))
+      parts.push('결과표')
+    }
+    const log = paintLog(state)
+    const logBlob = log ? await blobOf(log) : null
+    if (logBlob) {
+      files.push(new File([logBlob], `${safePart(state.rapName)}-약력.png`, { type: 'image/png' }))
+      parts.push('약력')
+    }
 
     const used = new Set<string>()
     let trackCount = 0
@@ -334,6 +412,7 @@ export function ShareCard({ state }: { state: GameState }) {
       files.push(new File([image], `${base}.png`, { type: 'image/png' }))
       trackCount += 1
     }
+    if (trackCount) parts.push(`곡 ${trackCount}장`)
 
     if (!files.length) return
 
@@ -344,14 +423,14 @@ export function ShareCard({ state }: { state: GameState }) {
           navigator.share(shareData),
           new Promise((_, reject) => setTimeout(() => reject(new Error('share-timeout')), 1500)),
         ])
-        setStatus(saveStatus(trackCount, true))
+        setStatus(saveStatus(parts, true))
         return
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return
       }
     }
     downloadFiles(files)
-    setStatus(saveStatus(trackCount, false))
+    setStatus(saveStatus(parts, false))
   }
 
   const color = state.genre ? GENRE_COLOR[state.genre] : '#1db954'
@@ -419,30 +498,24 @@ export function ShareCard({ state }: { state: GameState }) {
               </div>
             </>
           )}
-          {history.map((group) => {
-            const brief = group.items.filter((item) => BRIEF_ACTIONS.has(item.title))
-            const disses = group.items.filter((item) => isDissTitle(item.title))
-            const full = group.items.filter((item) => !BRIEF_ACTIONS.has(item.title) && !isDissTitle(item.title))
-            return (
-              <div className="phase-log" key={`${group.phase}-${group.items[0]?.id}`}>
-                <b style={{ color }}>{group.name}</b>
-                {brief.length > 0 && <p className="action-brief">{brief.map((item) => item.title).join(' · ')}</p>}
-                {disses.length > 0 && <p className="diss-brief">{disses.map((item) => dissLabel(item.title)).join(' · ')}</p>}
-                {full.map((item) => (
-                  <div className="action-row" key={item.id}>
-                    <strong>{item.title}</strong>
-                    <span>{item.detail}</span>
-                  </div>
-                ))}
-              </div>
-            )
-          })}
         </div>
       </article>
+      {history.length > 0 && (
+        <article className="share-card">
+          <div className="poster-bar" style={{ background: color }} />
+          <div className="poster-body">
+            <div className="mark" style={{ color }}>
+              한국 래퍼의 삶
+            </div>
+            <h2>약력</h2>
+            <p className="blurb">{state.rapName}</p>
+            <PhaseLogs history={history} color={color} />
+          </div>
+        </article>
+      )}
       <button className="btn btn-wide" style={{ marginTop: 12 }} type="button" onClick={() => void save()}>
         이미지 저장
       </button>
-      <p className="note">결과표와 곡마다 한 장을 받는다. 쇼미는 결과표에 시기별 최종만 적는다.</p>
       {status && <p className="note">{status}</p>}
     </section>
   )

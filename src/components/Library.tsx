@@ -102,7 +102,9 @@ export function AlbumList({ state }: { state: GameState }) {
               </span>
             </button>
             <div className="track-side">
-              <b>{track.score}</b>
+              <button className="track-meta" type="button" onClick={() => setOpen(expanded ? null : track.id)}>
+                <b>{track.score}</b>
+              </button>
               <button
                 className="share-mini"
                 type="button"
@@ -127,7 +129,8 @@ export function AlbumList({ state }: { state: GameState }) {
                 </p>
                 {playing === track.id && note && <p className="note">{note}</p>}
                 {shareNote?.id === track.id && shareNote.text && <p className="note">{shareNote.text}</p>}
-                <pre>{track.lyrics}</pre>
+                <p className="lyrics-kicker">가사</p>
+                {track.lyrics.trim() ? <pre className="track-lyrics">{track.lyrics}</pre> : <p className="note">가사가 없다.</p>}
               </div>
             )}
           </article>
